@@ -49,7 +49,7 @@ _data_root_param = dsl.PipelineParam(
 
 # Name of the output split from ExampleGen. Specified as a RuntimeParameter.
 _example_split_name = data_types.RuntimeParameter(
-    name='split-name', default='train', ptype=str
+    name='split-name', default='train'
 )
 
 
@@ -99,7 +99,7 @@ if __name__ == '__main__':
       get_default_kubeflow_metadata_config(),
       tfx_image='tensorflow/tfx:latest'
   )
-  kfp_runner = kubeflow_dag_runner.KubeflowDagRunner(config=config)
+  kfp_runner = kubeflow_dag_runner.KubeflowDagRunner(config=config, output_filename='dsl_parameter.yaml')
   # Make sure kfp_runner recognizes those parameters.
   kfp_runner._params.extend([_data_root_param])
 
