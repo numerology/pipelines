@@ -49,7 +49,11 @@ _data_root_param = dsl.PipelineParam(
 
 # Name of the output split from ExampleGen. Specified as a RuntimeParameter.
 _example_split_name = data_types.RuntimeParameter(
-    name='split-name', default='train'
+    name='split-name', default='train', ptype=Text
+)
+
+_example_buckets = data_types.RuntimeParameter(
+    name='buckets', default=10, ptype=int
 )
 
 
@@ -75,7 +79,7 @@ def _create_one_step_pipeline(
       output_config={
           'splitConfig': {
               'splits': [
-                {'name': _example_split_name, 'hashBuckets': 10}
+                {'name': _example_split_name, 'hashBuckets': _example_buckets}
               ]
           }
       }
