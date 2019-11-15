@@ -16,8 +16,8 @@
 
 In this sample, we'll walk through the process of authoring a pipeline with only
 one ExampleGen component in TFX DSL. This pipeline consumes an external csv file
-whose uri is runtime-parameterized and output an artifact with one split. The
-split name is also runtime-parameterized.
+whose uri is runtime-parameterized (in a hacky way) and output an artifact with
+one split. The split name and number of buckets are also runtime-parameterized.
 """
 
 import os
@@ -29,11 +29,9 @@ from kfp import dsl
 
 from tfx.components.example_gen.csv_example_gen.component import CsvExampleGen
 from tfx.orchestration import pipeline
-from tfx.orchestration.experimental.runtime_parameter import runtime_string_parameter
 from tfx.orchestration import data_types
 from tfx.orchestration.kubeflow import kubeflow_dag_runner
 from tfx.utils.dsl_utils import csv_input
-from tfx.proto import example_gen_pb2
 
 # Path of pipeline root, should be a GCS path.
 pipeline_root = os.path.join(
