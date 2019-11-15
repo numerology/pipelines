@@ -37,7 +37,7 @@ from tfx.proto import example_gen_pb2
 
 # Path of pipeline root, should be a GCS path.
 pipeline_root = os.path.join(
-    'gs://your-bucket', 'tfx_taxi_simple', kfp.dsl.RUN_ID_PLACEHOLDER
+    'gs://jxzheng-helloworld-kubeflow2-bucket', 'tfx_taxi_simple', kfp.dsl.RUN_ID_PLACEHOLDER
 )
 
 # Path to the CSV data file, under which their should be a data.csv file.
