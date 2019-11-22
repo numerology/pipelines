@@ -99,7 +99,7 @@ def _create_parameterized_pipeline(
     A logical TFX pipeline.Pipeline object.
   """
 
-  examples = csv_input(str(_data_root_param))
+  examples = csv_input(_data_root_param)
   example_gen = CsvExampleGen(
       input=examples
   )
