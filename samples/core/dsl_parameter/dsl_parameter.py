@@ -14,10 +14,12 @@
 # limitations under the License.
 """This sample demonstrates how to use pipeline parameter in TFX DSL.
 
-In this sample, we'll walk through the process of authoring a pipeline with only
-one ExampleGen component in TFX DSL. This pipeline consumes an external csv file
-whose uri is runtime-parameterized (in a hacky way) and output an artifact with
-one split. The split name and number of buckets are also runtime-parameterized.
+In this sample, we'll walk through the process of authoring a pipeline with
+RuntimeParameter. In principle RuntimeParameter can be used as common Python
+objects. However if the object to be parameterized happens to be a field in a
+protobuf message, then we have to construct a dictionary with exactly the same
+structure (key words, nested structures etc.) and put the RuntimeParameter with
+the same key as its field name in the protobuf spec.
 """
 
 import os
@@ -39,10 +41,8 @@ from tfx.components.trainer.component import Trainer
 from tfx.components.transform.component import Transform
 from tfx.orchestration import pipeline
 from tfx.orchestration.kubeflow import kubeflow_dag_runner
-from tfx.proto import evaluator_pb2
 from tfx.utils.dsl_utils import csv_input
 from tfx.proto import pusher_pb2
-from tfx.proto import trainer_pb2
 
 # Path of pipeline root, should be a GCS path.
 pipeline_root = os.path.join(
