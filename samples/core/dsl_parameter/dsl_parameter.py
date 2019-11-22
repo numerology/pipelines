@@ -98,8 +98,7 @@ def _create_parameterized_pipeline(
   Returns:
     A logical TFX pipeline.Pipeline object.
   """
-
-  examples = csv_input(_data_root_param)
+  examples = csv_input(str(_data_root_param))
   example_gen = CsvExampleGen(
       input=examples
   )
@@ -165,7 +164,7 @@ if __name__ == '__main__':
   config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=kubeflow_dag_runner.
       get_default_kubeflow_metadata_config(),
-      tfx_image='tensorflow/tfx:latest'
+      tfx_image='tensorflow/tfx:0.16.0.dev20191120'
   )
   kfp_runner = kubeflow_dag_runner.KubeflowDagRunner(config=config, output_filename='dsl_parameter.yaml')
 
