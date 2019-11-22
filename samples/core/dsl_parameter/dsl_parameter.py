@@ -88,7 +88,7 @@ def _create_parameterized_pipeline(
     pipeline_root: Text,
     enable_cache: Optional[bool] = True
 ) -> pipeline.Pipeline:
-  """Creates a simple TFX pipeline including only an ExampleGen.
+  """Creates a simple TFX pipeline with RuntimeParameter.
 
   Args:
     pipeline_name: The name of the pipeline.
