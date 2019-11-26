@@ -41,7 +41,7 @@ from tfx.components.trainer.component import Trainer
 from tfx.components.transform.component import Transform
 from tfx.orchestration import pipeline
 from tfx.orchestration.kubeflow import kubeflow_dag_runner
-from tfx.utils.dsl_utils import csv_input
+from tfx.utils.dsl_utils import external_input
 from tfx.proto import pusher_pb2
 
 # Path of pipeline root, should be a GCS path.
@@ -98,7 +98,7 @@ def _create_parameterized_pipeline(
   Returns:
     A logical TFX pipeline.Pipeline object.
   """
-  examples = csv_input(str(_data_root_param))
+  examples = external_input(_data_root_param)
   example_gen = CsvExampleGen(
       input=examples
   )
@@ -159,12 +159,12 @@ if __name__ == '__main__':
 
   enable_cache = True
   pipeline = _create_parameterized_pipeline(
-      'dsl_parameter', pipeline_root, enable_cache=enable_cache
+      'new_parameter_new_module', pipeline_root, enable_cache=enable_cache
   )
   config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=kubeflow_dag_runner.
       get_default_kubeflow_metadata_config(),
-      tfx_image='tensorflow/tfx:0.16.0.dev20191120'
+      tfx_image='tensorflow/tfx:latest'
   )
   kfp_runner = kubeflow_dag_runner.KubeflowDagRunner(config=config, output_filename='dsl_parameter.yaml')
 

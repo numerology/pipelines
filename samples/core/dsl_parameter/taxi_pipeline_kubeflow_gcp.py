@@ -16,7 +16,8 @@
 
 import os
 
-from typing import Dict, List, Text
+from typing import Any, Dict, List, Text
+import kfp
 
 from tfx.components.base import executor_spec
 from tfx.components.evaluator.component import Evaluator
@@ -40,7 +41,7 @@ _pipeline_name = 'chicago_taxi_pipeline_kubeflow_gcp'
 # Directory and data locations (uses Google Cloud Storage).
 # _tfx_root = os.path.join(_output_bucket, 'tfx')
 _pipeline_root = os.path.join(
-    'gs://jxzheng-helloworld-kubeflow2-bucket', _pipeline_name
+    'gs://jxzheng-helloworld-kubeflow2-bucket', _pipeline_name, kfp.dsl.RUN_ID_PLACEHOLDER
 )
 
 # Google Cloud Platform project id to use when deploying this pipeline.
@@ -104,6 +105,18 @@ _beam_pipeline_args = [
     '--region=' + str(_gcp_region),
 ]
 
+_train_steps = data_types.RuntimeParameter(
+    name='train-steps',
+    default=10,
+    ptype=int,
+)
+
+_eval_args = data_types.RuntimeParameter(
+    name='eval-steps',
+    default=5,
+    ptype=int,
+)
+
 # The rate at which to sample rows from the Chicago Taxi dataset using BigQuery.
 # The full taxi dataset is > 120M record.  In the interest of resource
 # savings and time, we've set the default for this example to be much smaller.
@@ -145,9 +158,9 @@ _query = """
 
 
 def _create_pipeline(
-    pipeline_name: Text, pipeline_root: Text, query: Text, module_file: Text,
-    beam_pipeline_args: List[Text], ai_platform_training_args: Dict[Text, Text],
-    ai_platform_serving_args: Dict[Text, Text]
+    pipeline_name: Text, pipeline_root: Text, query: Text,
+    beam_pipeline_args: List[Text], ai_platform_training_args: Dict[Text, Any],
+    ai_platform_serving_args: Dict[Text, Any]
 ) -> pipeline.Pipeline:
   """Implements the chicago taxi pipeline with TFX and Kubeflow Pipelines."""
 
@@ -173,7 +186,7 @@ def _create_pipeline(
   transform = Transform(
       examples=example_gen.outputs['examples'],
       schema=infer_schema.outputs['schema'],
-      module_file=module_file
+      module_file=_taxi_module_file_param
   )
 
   # Uses user-provided Python function that implements a model using TF-Learn
@@ -182,12 +195,12 @@ def _create_pipeline(
       custom_executor_spec=executor_spec.ExecutorClassSpec(
           ai_platform_trainer_executor.Executor
       ),
-      module_file=module_file,
+      module_file=_taxi_module_file_param,
       transformed_examples=transform.outputs['transformed_examples'],
       schema=infer_schema.outputs['schema'],
       transform_graph=transform.outputs['transform_graph'],
-      train_args=trainer_pb2.TrainArgs(num_steps=10000),
-      eval_args=trainer_pb2.EvalArgs(num_steps=5000),
+      train_args=dict(num_steps=_train_steps),
+      eval_args=dict(num_steps=_eval_args),
       custom_config={'ai_platform_training_args': ai_platform_training_args}
   )
 
@@ -245,15 +258,14 @@ if __name__ == '__main__':
   runner_config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=metadata_config,
       # Specify custom docker image to use.
-      tfx_image=tfx_image
+      tfx_image='tensorflow/tfx:latest'
   )
 
-  kubeflow_dag_runner.KubeflowDagRunner(config=runner_config).run(
+  kubeflow_dag_runner.KubeflowDagRunner(config=runner_config, output_filename='taxi_gcp.yaml').run(
       _create_pipeline(
           pipeline_name=_pipeline_name,
           pipeline_root=_pipeline_root,
           query=_query,
-          module_file=_module_file,
           beam_pipeline_args=_beam_pipeline_args,
           ai_platform_training_args=_ai_platform_training_args,
           ai_platform_serving_args=_ai_platform_serving_args,
