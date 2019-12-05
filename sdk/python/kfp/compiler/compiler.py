@@ -868,6 +868,14 @@ class Compiler(object):
         will be returned.
     """
     yaml.Dumper.ignore_aliases = lambda *args : True
+    # A custom representer for str to guarantee k8s interpret string like '008'
+    # correctly.
+    # Reference:
+    # https://stackoverflow.com/questions/8640959/how-can-i-control-what-scalar-form-pyyaml-uses-for-my-data
+    def quoted_presenter(dumper, data):
+      return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='"')
+    yaml.add_representer(str, quoted_presenter)
+
     yaml_text = yaml.dump(workflow, default_flow_style=False, default_style='|')
 
     if '{{pipelineparam' in yaml_text:
