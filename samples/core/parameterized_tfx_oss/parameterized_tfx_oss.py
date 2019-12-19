@@ -52,7 +52,7 @@ _data_root_param = dsl.PipelineParam(
 
 # Path of pipeline root, should be a GCS path.
 pipeline_root = os.path.join(
-    'gs://jxzheng-helloworld-kubeflow2-bucket', 'tfx_taxi_simple', kfp.dsl.RUN_ID_PLACEHOLDER
+    'gs://your-bucket', 'tfx_taxi_simple', kfp.dsl.RUN_ID_PLACEHOLDER
 )
 
 _KUBEFLOW_GCP_SECRET_NAME = 'user-gcp-sa'
@@ -206,25 +206,11 @@ def get_default_kubeflow_metadata_config(
     container so the TFX component driver is able to communicate with MLMD in
     a Kubeflow cluster.
   """
-  # The default metadata configuration for a Kubeflow Pipelines cluster is
-  # codified in a pair of Kubernetes ConfigMap and Secret that can be found in
-  # the following:
-  # https://github.com/kubeflow/pipelines/blob/master/manifests/kustomize/base/metadata/metadata-configmap.yaml
-  # https://github.com/kubeflow/pipelines/blob/master/manifests/kustomize/base/metadata/metadata-mysql-secret.yaml
-
   config = kubeflow_pb2.KubeflowMetadataConfig()
-  # The environment variable to use to obtain the MySQL service host in the
-  # cluster that is backing Kubeflow Metadata. Note that the key in the config
-  # map and therefore environment variable used, are lower-cased.
   config.mysql_db_service_host.value = 'metadata-db'
-  # The environment variable to use to obtain the MySQL service port in the
-  # cluster that is backing Kubeflow Metadata.
   config.mysql_db_service_port.value = '3306'
-  # The MySQL database name to use.
   config.mysql_db_name.value = 'metadb'
-  # The MySQL database username.
   config.mysql_db_user.value = 'root'
-  # The MySQL database password.
   config.mysql_db_password.environment_variable = 'MYSQL_ROOT_PASSWORD'
 
   return config
@@ -242,10 +228,7 @@ if __name__ == '__main__':
   # TFX SDK. Here we use tfx:0.15.0 image.
   config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
       kubeflow_metadata_config=get_default_kubeflow_metadata_config(),
-      # TODO: remove this override when KubeflowDagRunnerConfig doesn't default to use_gcp_secret op.
-      pipeline_operator_funcs=list(filter(
-          lambda operator: operator.__name__.find('gcp_secret') == -1,
-          get_default_pipeline_operator_funcs())),
+      pipeline_operator_funcs=get_default_pipeline_operator_funcs(),
       tfx_image='tensorflow/tfx:0.15.0',
   )
   kfp_runner = kubeflow_dag_runner.KubeflowDagRunner(

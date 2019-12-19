@@ -93,6 +93,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -117,6 +125,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -135,6 +148,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -200,6 +219,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -224,6 +251,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -240,6 +272,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -305,6 +343,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -329,6 +375,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -345,6 +396,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -410,6 +467,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -434,6 +499,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -450,6 +520,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "dag":
       "tasks":
       - "arguments":
@@ -665,6 +741,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -689,6 +773,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -705,6 +794,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -770,6 +865,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -794,6 +897,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -810,6 +918,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -875,6 +989,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -899,6 +1021,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -915,6 +1042,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -980,6 +1113,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -1004,6 +1145,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -1022,6 +1168,12 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
   - "container":
       "args":
       - |-
@@ -1087,6 +1239,14 @@
             "fieldPath": |-
               metadata.labels['workflows.argoproj.io/workflow']
       - "name": |-
+          GOOGLE_APPLICATION_CREDENTIALS
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE
+        "value": |-
+          /secret/gcp-credentials/user-gcp-sa.json
+      - "name": |-
           KFP_POD_NAME
         "valueFrom":
           "fieldRef":
@@ -1111,6 +1271,11 @@
             true
       "image": |-
         tensorflow/tfx:0.15.0
+      "volumeMounts":
+      - "mountPath": |-
+          /secret/gcp-credentials
+        "name": |-
+          gcp-credentials-user-gcp-sa
     "inputs":
       "parameters":
       - "name": |-
@@ -1129,3 +1294,9 @@
           mlpipeline-ui-metadata
         "path": |-
           /mlpipeline-ui-metadata.json
+    "volumes":
+    - "name": |-
+        gcp-credentials-user-gcp-sa
+      "secret":
+        "secretName": |-
+          user-gcp-sa
