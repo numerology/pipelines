@@ -18,7 +18,9 @@ import os
 from typing import Text
 
 import kfp
+from kubernetes import client as k8s_client
 from kfp import dsl
+from kfp import gcp
 from tfx.components.evaluator.component import Evaluator
 from tfx.components.example_gen.csv_example_gen.component import CsvExampleGen
 from tfx.components.example_validator.component import ExampleValidator
@@ -34,6 +36,7 @@ from tfx.proto import evaluator_pb2
 from tfx.utils.dsl_utils import external_input
 from tfx.proto import pusher_pb2
 from tfx.proto import trainer_pb2
+from tfx.orchestration.kubeflow.proto import kubeflow_pb2
 
 # Define pipeline params used for pipeline execution.
 # Path to the module file, should be a GCS path.
@@ -49,9 +52,10 @@ _data_root_param = dsl.PipelineParam(
 
 # Path of pipeline root, should be a GCS path.
 pipeline_root = os.path.join(
-    'gs://your-bucket', 'tfx_taxi_simple', kfp.dsl.RUN_ID_PLACEHOLDER
+    'gs://jxzheng-helloworld-kubeflow2-bucket', 'tfx_taxi_simple', kfp.dsl.RUN_ID_PLACEHOLDER
 )
 
+_KUBEFLOW_GCP_SECRET_NAME = 'user-gcp-sa'
 
 def _create_test_pipeline(
     pipeline_root: Text, csv_input_location: Text, taxi_module_file: Text,
@@ -125,7 +129,7 @@ def _create_test_pipeline(
   )
 
   return pipeline.Pipeline(
-      pipeline_name='parameterized_tfx_oss',
+      pipeline_name='parameterized_tfx_oss_1',
       pipeline_root=pipeline_root,
       components=[
           example_gen, statistics_gen, infer_schema, validate_stats, transform,
@@ -134,6 +138,96 @@ def _create_test_pipeline(
       enable_cache=enable_cache,
   )
 
+def _mount_secret_op(secret_name: Text):
+  """Mounts all key-value pairs found in the named Kubernetes Secret.
+
+  All key-value pairs in the Secret are mounted as environment variables.
+
+  Args:
+    secret_name: The name of the Secret resource.
+
+  Returns:
+    An OpFunc for mounting the Secret.
+  """
+
+  def mount_secret(container_op: dsl.ContainerOp):
+    secret_ref = k8s_client.V1ConfigMapEnvSource(
+        name=secret_name, optional=True)
+
+    container_op.container.add_env_from(
+        k8s_client.V1EnvFromSource(secret_ref=secret_ref))
+
+  return mount_secret
+
+def _mount_config_map_op(config_map_name: Text):
+  """Mounts all key-value pairs found in the named Kubernetes ConfigMap.
+
+  All key-value pairs in the ConfigMap are mounted as environment variables.
+
+  Args:
+    config_map_name: The name of the ConfigMap resource.
+
+  Returns:
+    An OpFunc for mounting the ConfigMap.
+  """
+
+  def mount_config_map(container_op: dsl.ContainerOp):
+    config_map_ref = k8s_client.V1ConfigMapEnvSource(
+        name=config_map_name, optional=True)
+    container_op.container.add_env_from(
+        k8s_client.V1EnvFromSource(config_map_ref=config_map_ref))
+
+  return mount_config_map
+
+def get_default_pipeline_operator_funcs():
+  """Returns a default list of pipeline operator functions.
+
+  Returns:
+    A list of functions with type OpFunc.
+  """
+  # Enables authentication for GCP services in a typical GKE Kubeflow
+  # installation.
+  gcp_secret_op = gcp.use_gcp_secret(_KUBEFLOW_GCP_SECRET_NAME)
+
+  # Mounts configmap containing the MySQL DB to use for logging metadata.
+  mount_config_map_op = _mount_config_map_op('metadata-db-parameters')
+
+  # Mounts the secret containing the MySQL DB password.
+  mysql_password_op = _mount_secret_op('metadata-db-secrets')
+
+  return [gcp_secret_op, mount_config_map_op, mysql_password_op]
+
+def get_default_kubeflow_metadata_config(
+) -> kubeflow_pb2.KubeflowMetadataConfig:
+  """Returns the default metadata connection config for Kubeflow.
+
+  Returns:
+    A config proto that will be serialized as JSON and passed to the running
+    container so the TFX component driver is able to communicate with MLMD in
+    a Kubeflow cluster.
+  """
+  # The default metadata configuration for a Kubeflow Pipelines cluster is
+  # codified in a pair of Kubernetes ConfigMap and Secret that can be found in
+  # the following:
+  # https://github.com/kubeflow/pipelines/blob/master/manifests/kustomize/base/metadata/metadata-configmap.yaml
+  # https://github.com/kubeflow/pipelines/blob/master/manifests/kustomize/base/metadata/metadata-mysql-secret.yaml
+
+  config = kubeflow_pb2.KubeflowMetadataConfig()
+  # The environment variable to use to obtain the MySQL service host in the
+  # cluster that is backing Kubeflow Metadata. Note that the key in the config
+  # map and therefore environment variable used, are lower-cased.
+  config.mysql_db_service_host.value = 'metadata-db'
+  # The environment variable to use to obtain the MySQL service port in the
+  # cluster that is backing Kubeflow Metadata.
+  config.mysql_db_service_port.value = '3306'
+  # The MySQL database name to use.
+  config.mysql_db_name.value = 'metadb'
+  # The MySQL database username.
+  config.mysql_db_user.value = 'root'
+  # The MySQL database password.
+  config.mysql_db_password.environment_variable = 'MYSQL_ROOT_PASSWORD'
+
+  return config
 
 if __name__ == '__main__':
 
@@ -147,12 +241,11 @@ if __name__ == '__main__':
   # Make sure the version of TFX image used is consistent with the version of
   # TFX SDK. Here we use tfx:0.15.0 image.
   config = kubeflow_dag_runner.KubeflowDagRunnerConfig(
-      kubeflow_metadata_config=kubeflow_dag_runner.
-      get_default_kubeflow_metadata_config(),
+      kubeflow_metadata_config=get_default_kubeflow_metadata_config(),
       # TODO: remove this override when KubeflowDagRunnerConfig doesn't default to use_gcp_secret op.
       pipeline_operator_funcs=list(filter(
           lambda operator: operator.__name__.find('gcp_secret') == -1,
-          kubeflow_dag_runner.get_default_pipeline_operator_funcs())),
+          get_default_pipeline_operator_funcs())),
       tfx_image='tensorflow/tfx:0.15.0',
   )
   kfp_runner = kubeflow_dag_runner.KubeflowDagRunner(
