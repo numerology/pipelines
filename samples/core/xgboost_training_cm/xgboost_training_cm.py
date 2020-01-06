@@ -1,19 +1,3 @@
-#!/usr/bin/env python3
-# Copyright 2019 Google LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-
 import json
 import kfp
 from kfp import components
@@ -21,22 +5,22 @@ from kfp import dsl
 import os
 import subprocess
 
-confusion_matrix_op = components.load_component_from_url('https://raw.githubusercontent.com/kubeflow/pipelines/e4d9e2b67cf39c5f12b9c1477cae11feb1a74dc7/components/local/confusion_matrix/component.yaml')
+confusion_matrix_op = components.load_component_from_url('https://raw.githubusercontent.com/kubeflow/pipelines/72e1214abe2bde2e10a0f44d16b162db1a623c63/components/local/confusion_matrix/component.yaml')
 
-roc_op = components.load_component_from_url('https://raw.githubusercontent.com/kubeflow/pipelines/e4d9e2b67cf39c5f12b9c1477cae11feb1a74dc7/components/local/roc/component.yaml')
+roc_op = components.load_component_from_url('https://raw.githubusercontent.com/kubeflow/pipelines/72e1214abe2bde2e10a0f44d16b162db1a623c63/components/local/roc/component.yaml')
 
 dataproc_create_cluster_op = components.load_component_from_url(
-    'https://raw.githubusercontent.com/kubeflow/pipelines/e4d9e2b67cf39c5f12b9c1477cae11feb1a74dc7/components/gcp/dataproc/create_cluster/component.yaml')
+    'https://raw.githubusercontent.com/kubeflow/pipelines/72e1214abe2bde2e10a0f44d16b162db1a623c63/components/gcp/dataproc/create_cluster/component.yaml')
 
 dataproc_delete_cluster_op = components.load_component_from_url(
-    'https://raw.githubusercontent.com/kubeflow/pipelines/e4d9e2b67cf39c5f12b9c1477cae11feb1a74dc7/components/gcp/dataproc/delete_cluster/component.yaml')
+    'https://raw.githubusercontent.com/kubeflow/pipelines/72e1214abe2bde2e10a0f44d16b162db1a623c63/components/gcp/dataproc/delete_cluster/component.yaml')
 
 dataproc_submit_pyspark_op = components.load_component_from_url(
-    'https://raw.githubusercontent.com/kubeflow/pipelines/e4d9e2b67cf39c5f12b9c1477cae11feb1a74dc7/components/gcp/dataproc/submit_pyspark_job/component.yaml'
+    'https://raw.githubusercontent.com/kubeflow/pipelines/72e1214abe2bde2e10a0f44d16b162db1a623c63/components/gcp/dataproc/submit_pyspark_job/component.yaml'
 )
 
 dataproc_submit_spark_op = components.load_component_from_url(
-    'https://raw.githubusercontent.com/kubeflow/pipelines/e4d9e2b67cf39c5f12b9c1477cae11feb1a74dc7/components/gcp/dataproc/submit_spark_job/component.yaml'
+    'https://raw.githubusercontent.com/kubeflow/pipelines/72e1214abe2bde2e10a0f44d16b162db1a623c63/components/gcp/dataproc/submit_spark_job/component.yaml'
 )
 
 _PYSRC_PREFIX = 'gs://ml-pipeline-playground/dataproc-example' # Common path to python src.
@@ -70,7 +54,6 @@ def dataproc_analyze_op(
     train_data,
     output):
   """Submit dataproc analyze as a pyspark job.
-
   :param project: GCP project ID.
   :param region: Which zone to run this analyze.
   :param cluster_name: Name of the cluster.
@@ -98,7 +81,6 @@ def dataproc_transform_op(
     output
 ):
   """Submit dataproc transform as a pyspark job.
-
   :param project: GCP project ID.
   :param region: Which zone to run this analyze.
   :param cluster_name: Name of the cluster.
@@ -214,87 +196,87 @@ def xgb_train_pipeline(
     workers=2,
     true_label='ACTION',
 ):
-    output_template = str(output) + '/' + dsl.RUN_ID_PLACEHOLDER + '/data'
+  output_template = str(output) + '/' + dsl.RUN_ID_PLACEHOLDER + '/data'
 
-    # Current GCP pyspark/spark op do not provide outputs as return values, instead,
-    # we need to use strings to pass the uri around.
-    analyze_output = output_template
-    transform_output_train = os.path.join(output_template, 'train', 'part-*')
-    transform_output_eval = os.path.join(output_template, 'eval', 'part-*')
-    train_output = os.path.join(output_template, 'train_output')
-    predict_output = os.path.join(output_template, 'predict_output')
+  # Current GCP pyspark/spark op do not provide outputs as return values, instead,
+  # we need to use strings to pass the uri around.
+  analyze_output = output_template
+  transform_output_train = os.path.join(output_template, 'train', 'part-*')
+  transform_output_eval = os.path.join(output_template, 'eval', 'part-*')
+  train_output = os.path.join(output_template, 'train_output')
+  predict_output = os.path.join(output_template, 'predict_output')
 
-    with dsl.ExitHandler(exit_op=dataproc_delete_cluster_op(
+  with dsl.ExitHandler(exit_op=dataproc_delete_cluster_op(
+      project_id=project,
+      region=region,
+      name=cluster_name
+  )):
+    _create_cluster_op = dataproc_create_cluster_op(
         project_id=project,
         region=region,
-        name=cluster_name
-    )):
-        _create_cluster_op = dataproc_create_cluster_op(
-            project_id=project,
-            region=region,
-            name=cluster_name,
-            initialization_actions=[
-              os.path.join(_PYSRC_PREFIX,
-                           'initialization_actions.sh'),
-            ],
-            image_version='1.2'
-        )
+        name=cluster_name,
+        initialization_actions=[
+          os.path.join(_PYSRC_PREFIX,
+                       'initialization_actions.sh'),
+        ],
+        image_version='1.2'
+    )
 
-        _analyze_op = dataproc_analyze_op(
-            project=project,
-            region=region,
-            cluster_name=cluster_name,
-            schema=schema,
-            train_data=train_data,
-            output=output_template
-        ).after(_create_cluster_op).set_display_name('Analyzer')
+    _analyze_op = dataproc_analyze_op(
+        project=project,
+        region=region,
+        cluster_name=cluster_name,
+        schema=schema,
+        train_data=train_data,
+        output=output_template
+    ).after(_create_cluster_op).set_display_name('Analyzer')
 
-        _transform_op = dataproc_transform_op(
-            project=project,
-            region=region,
-            cluster_name=cluster_name,
-            train_data=train_data,
-            eval_data=eval_data,
-            target=target,
-            analysis=analyze_output,
-            output=output_template
-        ).after(_analyze_op).set_display_name('Transformer')
+    _transform_op = dataproc_transform_op(
+        project=project,
+        region=region,
+        cluster_name=cluster_name,
+        train_data=train_data,
+        eval_data=eval_data,
+        target=target,
+        analysis=analyze_output,
+        output=output_template
+    ).after(_analyze_op).set_display_name('Transformer')
 
-        _train_op = dataproc_train_op(
-            project=project,
-            region=region,
-            cluster_name=cluster_name,
-            train_data=transform_output_train,
-            eval_data=transform_output_eval,
-            target=target,
-            analysis=analyze_output,
-            workers=workers,
-            rounds=rounds,
-            output=train_output
-        ).after(_transform_op).set_display_name('Trainer')
+    _train_op = dataproc_train_op(
+        project=project,
+        region=region,
+        cluster_name=cluster_name,
+        train_data=transform_output_train,
+        eval_data=transform_output_eval,
+        target=target,
+        analysis=analyze_output,
+        workers=workers,
+        rounds=rounds,
+        output=train_output
+    ).after(_transform_op).set_display_name('Trainer')
 
-        _predict_op = dataproc_predict_op(
-            project=project,
-            region=region,
-            cluster_name=cluster_name,
-            data=transform_output_eval,
-            model=train_output,
-            target=target,
-            analysis=analyze_output,
-            output=predict_output
-        ).after(_train_op).set_display_name('Predictor')
+    _predict_op = dataproc_predict_op(
+        project=project,
+        region=region,
+        cluster_name=cluster_name,
+        data=transform_output_eval,
+        model=train_output,
+        target=target,
+        analysis=analyze_output,
+        output=predict_output
+    ).after(_train_op).set_display_name('Predictor')
 
-        _cm_op = confusion_matrix_op(
-            predictions=os.path.join(predict_output, 'part-*.csv'),
-            output_dir=output_template
-        ).after(_predict_op)
+    _cm_op = confusion_matrix_op(
+        predictions=os.path.join(predict_output, 'part-*.csv'),
+        output_dir=output_template
+    ).after(_predict_op)
 
-        _roc_op = roc_op(
-            predictions_dir=os.path.join(predict_output, 'part-*.csv'),
-            true_class=true_label,
-            true_score_column=true_label,
-            output_dir=output_template
-        ).after(_predict_op)
+    _roc_op = roc_op(
+        predictions_dir=os.path.join(predict_output, 'part-*.csv'),
+        true_class=true_label,
+        true_score_column=true_label,
+        output_dir=output_template
+    ).after(_predict_op)
 
 if __name__ == '__main__':
-    kfp.compiler.Compiler().compile(xgb_train_pipeline, __file__ + '.yaml')
+  kfp.compiler.Compiler().compile(xgb_train_pipeline, __file__ + '.yaml')
