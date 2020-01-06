@@ -62,7 +62,7 @@ implementation:
       --requirements_file_path, {inputValue: requirements_file_path},
       --args, {inputValue: args},
       --wait_interval, {inputValue: wait_interval},
-      --ui-metadata-path, {default: '/mlpipeline-ui-metadata.json', outputPath: MLPipeline UI metadata},
+      --ui_metadata_path, {outputPath: MLPipeline UI metadata},
     ]
     env:
       KFP_POD_NAME: "{{pod.name}}"
