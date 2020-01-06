@@ -55,8 +55,8 @@ implementation:
   container:
     image: gcr.io/jxzheng-helloworld/ml-pipeline-gcp:latest
     args: [
-      kfp_component.google.dataflow,
       --ui_metadata_path, {outputPath: MLPipeline UI metadata},
+      kfp_component.google.dataflow,
       launch_python,
       --python_file_path, {inputValue: python_file_path},
       --project_id, {inputValue: project_id},
