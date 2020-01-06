@@ -53,7 +53,7 @@ outputs:
     type: UI metadata
 implementation:
   container:
-    image: gcr.io/ml-pipeline/ml-pipeline-gcp:cb7342c5c19bfbc2f4f253e7ada9f9ff909594d1
+    image: gcr.io/jxzheng-helloworld/ml-pipeline-gcp:latest
     args: [
       kfp_component.google.dataflow, launch_python,
       --python_file_path, {inputValue: python_file_path},
