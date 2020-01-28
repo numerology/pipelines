@@ -12,6 +12,7 @@ import (
 
 type KubernetesCoreInterface interface {
 	PodClient(namespace string) v1.PodInterface
+	ConfigClient(namespace string) v1.ConfigMapInterface
 }
 
 type KubernetesCore struct {
@@ -20,6 +21,10 @@ type KubernetesCore struct {
 
 func (c *KubernetesCore) PodClient(namespace string) v1.PodInterface {
 	return c.coreV1Client.Pods(namespace)
+}
+
+func (c *KubernetesCore) ConfigMapClient(namespace string) v1.ConfigMapInterface {
+  return c.coreV1Client.ConfigMaps(namespace)
 }
 
 func createKubernetesCore() (KubernetesCoreInterface, error) {
