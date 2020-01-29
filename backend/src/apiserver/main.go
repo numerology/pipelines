@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"flag"
 	"github.com/fsnotify/fsnotify"
+	"github.com/kubeflow/pipelines/backend/src/apiserver/client"
 	"github.com/kubeflow/pipelines/backend/src/apiserver/common"
 	"github.com/spf13/viper"
 	"io"
@@ -198,6 +199,10 @@ func loadSamples(resourceManager *resource.ResourceManager) error {
 		if configErr != nil {
 			return fmt.Errorf("Failed to decompress the file %s. Error: %v", config.Name, configErr)
 		}
+		// Patch the pre-loaded XGBoost and TFX samples, so that the default GCS bucket name
+		// is automatically populated.
+		resourceManager.k8sCoreClient.ConfigMapClient()
+
 		_, configErr = resourceManager.CreatePipeline(config.Name, config.Description, pipelineFile)
 		if configErr != nil {
 			// Log the error but not fail. The API Server pod can restart and it could potentially cause name collision.
