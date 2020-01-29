@@ -647,6 +647,8 @@ spec:
               value: 'pipeline-runner'
             - name: HASDEFAULTBUCKET
               value: 'true'
+            - name: NAMESPACE
+              value: {{ .Release.Namespace}}
             # Following environment variables are only needed when using Cloud SQL and GCS.
             {{ if .Values.managedstorage.enabled }}
             - name: OBJECTSTORECONFIG_BUCKETNAME

@@ -33,16 +33,20 @@ import (
 	"os"
 
 	"github.com/golang/glog"
+	"cloud.google.com/go/storage"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	api "github.com/kubeflow/pipelines/backend/api/go_client"
 	"github.com/kubeflow/pipelines/backend/src/apiserver/resource"
 	"github.com/kubeflow/pipelines/backend/src/apiserver/server"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/compute/v1"
 )
 
 const (
   hasDefaultBucketEnvVar = "HasDefaultBucket"
+  nameSpaceEnvVar = "NameSpace"
 )
 
 var (
@@ -62,7 +66,23 @@ func main() {
 	resourceManager := resource.NewResourceManager(&clientManager)
 
 	if common.GetBooleanConfigWithDefault(hasDefaultBucketEnvVar, false) {
-	  // Create a bucket.
+	  // Create a bucket when needed.
+	  ctx := context.Background()
+	  credentials, err := google.FindDefaultCredentials(ctx,compute.ComputeScope)
+	  if err != nil {
+	    log.Fatalf("Failed to retrieve credentials: %v", err)
+	  }
+	  projectId := credentials.ProjectID
+
+	  client, err := storage.NewClient(ctx)
+    if err != nil {
+      log.Fatalf("Failed to create client: %v", err)
+    }
+    namespace := common.GetStringConfigWithDefault(nameSpaceEnvVar, "kubeflow")
+    // Read bucket name from config map.
+    resourceManager.k8sCoreClient.ConfigMapClient(namespace)
+
+
 	}
 
 	err := loadSamples(resourceManager)
