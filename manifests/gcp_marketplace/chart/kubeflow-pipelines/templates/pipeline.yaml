@@ -645,7 +645,7 @@ spec:
                   fieldPath: metadata.namespace
             - name: DEFAULTPIPELINERUNNERSERVICEACCOUNT
               value: 'pipeline-runner'
-            - name: HAS_DEFAULT_BUCKET
+            - name: HASDEFAULTBUCKET
               value: 'true'
             # Following environment variables are only needed when using Cloud SQL and GCS.
             {{ if .Values.managedstorage.enabled }}

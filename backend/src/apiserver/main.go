@@ -41,7 +41,7 @@ import (
 )
 
 const (
-  hasDefaultBucketEnvVar = "HAS_DEFAULT_BUCKET"
+  hasDefaultBucketEnvVar = "HasDefaultBucket"
 )
 
 var (
