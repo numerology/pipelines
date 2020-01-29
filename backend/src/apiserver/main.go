@@ -40,6 +40,10 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
+const (
+  hasDefaultBucketEnvVar = "HAS_DEFAULT_BUCKET"
+)
+
 var (
 	rpcPortFlag      = flag.String("rpcPortFlag", ":8887", "RPC Port")
 	httpPortFlag     = flag.String("httpPortFlag", ":8888", "Http Proxy Port")
@@ -55,6 +59,11 @@ func main() {
 	initConfig()
 	clientManager := newClientManager()
 	resourceManager := resource.NewResourceManager(&clientManager)
+
+	if common.GetBooleanConfigWithDefault(hasDefaultBucketEnvVar, false) {
+	  // Create a bucket.
+	}
+
 	err := loadSamples(resourceManager)
 	if err != nil {
 		glog.Fatalf("Failed to load samples. Err: %v", err)
