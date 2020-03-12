@@ -1,4 +1,4 @@
-# Copyright 2018 Google LLC
+# Copyright 2020 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: sample-test-
+  generateName: integration-test-
 spec:
-  entrypoint: sample-test
+  entrypoint: integration-test
   arguments:
     parameters:
       - name: image-build-context-gcs-uri
@@ -25,20 +25,20 @@ spec:
         value: gcr.io/ml-pipeline-test/image-builder:v20200208-0.1.25-771-g4c571961
       - name: target-image-prefix
       - name: test-results-gcs-dir
-      - name: sample-tests-image-suffix
-        value: sample-tests
+      - name: integration-tests-image-suffix
+        value: integration-tests
       - name: namespace
         value: kubeflow
   templates:
-    - name: sample-test
+    - name: integration-test
       inputs:
         parameters:
           - name: target-image-prefix
           - name: test-results-gcs-dir
-          - name: sample-tests-image-suffix
+          - name: integration-tests-image-suffix
           - name: namespace
       steps:
-        - - name: build-sample-tests-image
+        - - name: build-integration-tests-image
             template: build-image-by-dockerfile
             arguments:
               parameters:
@@ -48,14 +48,14 @@ spec:
                   value: test/sample-test/Dockerfile
                 - name: image-name
                   value: "{{inputs.parameters.target-image-prefix}}{{inputs.parameters.sample-tests-image-suffix}}"
-        - - name: run-sample-tests-loop
-            template: run-sample-tests
+        - - name: run-integration-tests-loop
+            template: run-integration-tests
             arguments:
               parameters:
                 - name: namespace
                   value: "{{inputs.parameters.namespace}}"
-                - name: sample-tests-image
-                  value: "{{inputs.parameters.target-image-prefix}}{{inputs.parameters.sample-tests-image-suffix}}"
+                - name: integration-tests-image
+                  value: "{{inputs.parameters.target-image-prefix}}{{inputs.parameters.integration-tests-image-suffix}}"
                 - name: target-image-prefix
                   value: "{{inputs.parameters.target-image-prefix}}"
                 - name: test-results-gcs-dir
@@ -63,23 +63,11 @@ spec:
                 - name: test-name
                   value: "{{item}}"
             withItems:
-              - lightweight_component
-              - dsl_static_type_checking
-              - pipeline_transformers
-              - secret
-              - sidecar
-              - execution_order
-              - imagepullsecrets
-              - retry
-              - artifact_location
-              - preemptible_tpu_gpu
-              - volume_snapshot_ops
-              - loop_output
-              - loop_parameter
-              - loop_static
-              - resource_ops
-              - multiple_outputs
-              - parameterized_tfx_oss
+              - xgboost_training_cm
+              - dataflow
+              - kubeflow_tf_serving
+              - container_build
+              - ai_platform
     # Build and push image
     - name: build-image-by-dockerfile
       retryStrategy:
@@ -128,7 +116,7 @@ spec:
           - name: namespace
           - name: test-name
       container:
-        image: "{{inputs.parameters.sample-tests-image}}"
+        image: "{{inputs.parameters.integration-tests-image}}"
         args: [
           "sample_test", "run_test",
           "--namespace", "{{inputs.parameters.namespace}}",
