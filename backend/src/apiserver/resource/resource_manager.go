@@ -286,6 +286,8 @@ func (r *ResourceManager) CreateRun(apiRun *api.Run) (*model.RunDetail, error) {
 
 	// Disable istio sidecar injection
 	workflow.SetAnnotationsToAllTemplates(util.AnnotationKeyIstioSidecarInject, util.AnnotationValueIstioSidecarInjectDisabled)
+	// DO NOT SUBMIT: testing
+    workflow.SetAnnotationsToAllTemplates("pipelines.kubeflow.org/cache_enabled", "true")
 	// Append provided parameter
 	workflow.OverrideParameters(parameters)
 
