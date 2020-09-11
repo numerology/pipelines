@@ -117,10 +117,17 @@ def parse_object_from_struct_based_on_type(struct: Any, typ: Type[T]) -> T:
 
     if hasattr(typ, 'from_dict'):
         try: #More informative errors
+            
+            if len(struct) == 1 and struct.get('Artifact'):
+                # print('{} is being translated from dict structure: {}'.format(typ, struct.get('Artifact')))
+                return typ.from_dict(dict(struct.get('Artifact')))
+            
             return typ.from_dict(struct)
         except Exception as ex:
             raise TypeError('Error: {}.from_dict(struct={}) failed with exception:\n{}'.format(typ.__name__, struct, str(ex)))
     if hasattr(typ, '__origin__'): #Handling generic types
+        # print('Handling generic type of {}'.format(typ))
+        
         if typ.__origin__ is Union: #Optional == Union
             results = {}
             exception_map = {}

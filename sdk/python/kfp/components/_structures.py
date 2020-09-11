@@ -63,11 +63,12 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 from .modelbase import ModelBase
 
+from kfp.v2.metadata import artifact_types
 
 PrimitiveTypes = Union[str, int, float, bool]
 PrimitiveTypesIncludingNone = Optional[PrimitiveTypes]
 
-TypeSpecType = Union[str, Dict, List]
+TypeSpecType = Union[str, List, artifact_types.Artifact]
 
 
 class InputSpec(ModelBase):

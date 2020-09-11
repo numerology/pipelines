@@ -16,22 +16,30 @@ from kfp.components import _yaml_utils as yaml_utils, _structures as structures
 from kfp.v2.metadata import artifact_types
 from collections import OrderedDict
 
-# Only when a dict and
 
+# NOT USED!
 def node_load_hook(*args):
-  # print('args = {}'.format(repr(args)))
-  if len(args) == 1 and isinstance(args[0][0], tuple) and 'schema' in args[0][0][0]:
+  print('current args = ')
+  print(args)
+  # When we enter the artifact descriptor
+  # args is a tuple of lists of tuples
+  if len(args) == 1 and isinstance(args[0][0], tuple) and 'Artifact' == args[0][0][0]:
     # args[0] list
     # args[0][0] tuple
-    # print('Constructing artifact')
-    return artifact_types.Artifact(**dict(args[0]))
+    print('Constructing artifact')
+    #return artifact_types.deserialize_artifacts(**dict())
+    
+    # args[0][0][0] == 'Artifact'
+    # args[0][0][1] is an *already constructed* OrderedDict of data
+    return artifact_types.deserialize_artifacts(args[0][0][1])
+    # return OrderedDict(args[0][0][1])
   else:
     return OrderedDict(*args)
 
 def _load_component_spec_from_component_text(text) -> structures.ComponentSpec:
   component_dict = yaml_utils.load_yaml(
       stream=text,
-      object_pairs_hook=node_load_hook,
+      object_pairs_hook=OrderedDict,
   )
   component_spec = structures.ComponentSpec.from_dict(component_dict)
   

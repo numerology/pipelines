@@ -24,9 +24,16 @@ What do we need:
    for 2), the object is loaded from a string
 
 For CUJ 2 the first one is what we need.
+
+Hit a lot of issue when deserialize from OrderedDict by inheriting ModelBase,
+I think it's better if we embed the type information in the serialized
+expression. Currently I forcefully do that in modelbase.parse_object_from_struct_based_on_type
+and erase the Dict option for input type.
+
+
 """
 import importlib
-from typing import Any, Dict, Text, Type
+from typing import Any, Dict, Mapping, Text, Type
 
 from kfp.components import modelbase
 
@@ -60,16 +67,25 @@ class Artifact(modelbase.ModelBase):
     #   self.__setattr__(k, v)
     # print(type(kwargs))
     super().__init__(locals())
+  
+  @classmethod
+  def from_dict(cls, struct: Mapping) -> 'Artifact':
+    if not struct.get('schema_title', None):
+      raise RuntimeError('Where is the title?')
+
+    class_path = SCHEMA_TO_TYPE_PATH.get(struct.get('schema_title'))
+    artifact_class = import_class_by_path(class_path)
+    return artifact_class(schema_title=struct.get('schema_title'))
 
 
 class Dataset(Artifact):
   def __init__(self, schema_title):
-    super().__init__(locals())
+    super().__init__(schema_title=schema_title)
 
 
 class Model(Artifact):
   def __init__(self, schema_title):
-    super().__init__(locals())
+    super().__init__(schema_title=schema_title)
 
 # BEGIN: helpers
 
