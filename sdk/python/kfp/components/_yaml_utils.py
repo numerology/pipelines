@@ -14,16 +14,20 @@
 import yaml
 from collections import OrderedDict
 
-def load_yaml(stream):
+def load_yaml(stream, object_pairs_hook=OrderedDict):
     #!!! Yaml should only be loaded using this function. Otherwise the dict ordering may be broken in Python versions prior to 3.6
     #See https://stackoverflow.com/questions/5121931/in-python-how-can-you-load-yaml-mappings-as-ordereddicts/21912744#21912744
 
-    def ordered_load(stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
+    def ordered_load(
+        stream,
+        Loader=yaml.SafeLoader):
         class OrderedLoader(Loader):
             pass
+        
         def construct_mapping(loader, node):
             loader.flatten_mapping(node)
             return object_pairs_hook(loader.construct_pairs(node))
+        
         OrderedLoader.add_constructor(
             yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
             construct_mapping)

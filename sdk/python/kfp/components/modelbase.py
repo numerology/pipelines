@@ -276,6 +276,8 @@ class ModelBase:
         return convert_object_to_struct(self, serialized_names=self._serialized_names)
     
     def _get_field_names(self):
+        # TODO: this needs to improve. Otherwise child classes cannot support
+        # dynamic constructor.
         return list(inspect.signature(self.__init__).parameters)
 
     def __repr__(self):
