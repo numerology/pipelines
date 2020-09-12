@@ -39,8 +39,12 @@ def node_load_hook(*args):
 def _load_component_spec_from_component_text(text) -> structures.ComponentSpec:
   component_dict = yaml_utils.load_yaml(
       stream=text,
-      object_pairs_hook=OrderedDict,
+      # When use ModelBase do the following line
+      # object_pairs_hook=OrderedDict
+      object_pairs_hook=dict,
   )
+  print('component_dict:\n{}'.format(component_dict))
+  
   component_spec = structures.ComponentSpec.from_dict(component_dict)
   
   # Calculating hash digest for the component
@@ -66,4 +70,3 @@ def load_component_from_text(text):
     raise TypeError
   component_spec = _load_component_spec_from_component_text(text)
   return component_spec
-  # return _create_task_factory_from_component_spec(component_spec=component_spec)

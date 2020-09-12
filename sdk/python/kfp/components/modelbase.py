@@ -120,7 +120,10 @@ def parse_object_from_struct_based_on_type(struct: Any, typ: Type[T]) -> T:
             
             if len(struct) == 1 and struct.get('Artifact'):
                 # print('{} is being translated from dict structure: {}'.format(typ, struct.get('Artifact')))
-                return typ.from_dict(dict(struct.get('Artifact')))
+                return typ.from_dict(struct.get('Artifact'))
+            
+            elif len(struct) == 1 and struct.get('Parameter'):
+                return typ.from_dict(struct.get('Parameter'))
             
             return typ.from_dict(struct)
         except Exception as ex:
