@@ -35,6 +35,8 @@ class Yamlable(object):
 # TypeSpec = [artifact_types.Artifact, parameters.Parameter]
 
 class TypeSpec(Yamlable):
+  """This is actually a type alias. Should not have __init__."""
+  
   @classmethod
   def from_dict(cls, dict_data: Dict[str, Any]) -> Any:
     if 'Parameter' in dict_data:
@@ -109,6 +111,7 @@ class ContainerImplementationType(Yamlable):
     result = cls.__new__(cls)
     result.__dict__['container'] = ContainerSpec.from_dict(
         dict_data['container'])
+    return result
 
 
 # Later on we might support other types, like service calls
