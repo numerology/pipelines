@@ -33,6 +33,8 @@ from kfp.v2.components import structures
 
 _default_component_name = 'Component'
 
+_FULL_INVOCATION_PLACEHOLDER = '{{$}}'
+
 
 def load_component(filename=None, url=None, text=None):
   """Loads component from text, file or URL and creates a task factory function
@@ -459,6 +461,10 @@ def _resolve_command_line_and_paths(
       return None
     if isinstance(arg, (str, int, float, bool)):
       return str(arg)
+
+    # TODO(numerology): Fail this when running in legacy compilation logic.
+    if isinstance(arg, structures.FullInputPlaceholder):
+      return _FULL_INVOCATION_PLACEHOLDER
 
     if isinstance(arg, structures.InputValuePlaceholder):
       input_name = arg.input_name

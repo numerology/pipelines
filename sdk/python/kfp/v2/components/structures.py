@@ -251,6 +251,16 @@ class IfPlaceholder(ModelBase):  #Non-standard attr names
     super().__init__(locals())
 
 
+class FullInputPlaceholder(ModelBase):
+  """A placeholder that represents the whole input of this component in JSON.
+
+  TODO(numerology): Add an example.
+  """
+
+  def __init__(self):
+    super().__init__(locals())
+
+
 class ContainerSpec(ModelBase):
   """Describes the container component implementation."""
   _serialized_names = {
