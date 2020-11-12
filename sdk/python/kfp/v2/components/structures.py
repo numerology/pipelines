@@ -15,6 +15,7 @@
 __all__ = [
     'InputSpec',
     'OutputSpec',
+    'FullInputPlaceholder',
     'InputUriPlaceholder',
     'InputValuePlaceholder',
     'InputPathPlaceholder',
@@ -92,7 +93,20 @@ class OutputSpec(ModelBase):
     super().__init__(locals())
 
 
-class InputUriPlaceholder(ModelBase):  #Non-standard attr names
+class FullInputPlaceholder(ModelBase):
+  """A placeholder that represents the whole input of this component in JSON.
+
+  TODO(numerology): Add an example.
+  """
+  _serialized_names = {
+      'not_used': 'fullInput'
+  }
+
+  def __init__(self, not_used):
+    super().__init__(locals())
+
+
+class InputUriPlaceholder(ModelBase):  # Non-standard attr names
   """Represents a placeholder for the URI of an input artifact.
 
   Represents the command-line argument placeholder that will be replaced at
@@ -109,7 +123,7 @@ class InputUriPlaceholder(ModelBase):  #Non-standard attr names
     super().__init__(locals())
 
 
-class InputValuePlaceholder(ModelBase):  #Non-standard attr names
+class InputValuePlaceholder(ModelBase):  # Non-standard attr names
   """Represents the command-line argument placeholder that will be replaced at run-time by the input argument value."""
   _serialized_names = {
       'input_name': 'inputValue',
@@ -126,7 +140,7 @@ def _custom_formatwarning(message, category, filename, lineno, line=None):
   return '%s:%s: %s: %s\n' % (filename, lineno, category.__name__, message)
 
 
-class InputPathPlaceholder(ModelBase):  #Non-standard attr names
+class InputPathPlaceholder(ModelBase):  # Non-standard attr names
   """Represents the command-line argument placeholder that will be replaced at run-time by a local file path pointing to a file containing the input argument value."""
   _serialized_names = {
       'input_name': 'inputPath',
@@ -146,7 +160,7 @@ class InputPathPlaceholder(ModelBase):  #Non-standard attr names
     warnings.formatwarning = formatwarning_orig
 
 
-class OutputPathPlaceholder(ModelBase):  #Non-standard attr names
+class OutputPathPlaceholder(ModelBase):  # Non-standard attr names
   """Represents the command-line argument placeholder that will be replaced at run-time by a local file path pointing to a file where the program should write its output data."""
   _serialized_names = {
       'output_name': 'outputPath',
@@ -166,7 +180,7 @@ class OutputPathPlaceholder(ModelBase):  #Non-standard attr names
     warnings.formatwarning = formatwarning_orig
 
 
-class OutputUriPlaceholder(ModelBase):  #Non-standard attr names
+class OutputUriPlaceholder(ModelBase):  # Non-standard attr names
   """Represents a placeholder for the URI of an output artifact.
 
   Represents the command-line argument placeholder that will be replaced at
@@ -184,13 +198,13 @@ class OutputUriPlaceholder(ModelBase):  #Non-standard attr names
     super().__init__(locals())
 
 
-CommandlineArgumentType = Union[str, InputUriPlaceholder, InputValuePlaceholder,
-                                InputPathPlaceholder, OutputUriPlaceholder,
-                                OutputPathPlaceholder, 'ConcatPlaceholder',
-                                'IfPlaceholder',]
+CommandlineArgumentType = Union[str, FullInputPlaceholder, InputUriPlaceholder,
+                                InputValuePlaceholder, InputPathPlaceholder,
+                                OutputUriPlaceholder, OutputPathPlaceholder,
+                                'ConcatPlaceholder', 'IfPlaceholder',]
 
 
-class ConcatPlaceholder(ModelBase):  #Non-standard attr names
+class ConcatPlaceholder(ModelBase):  # Non-standard attr names
   """Represents the command-line argument placeholder that will be replaced at run-time by the concatenated values of its items."""
   _serialized_names = {
       'items': 'concat',
@@ -203,7 +217,7 @@ class ConcatPlaceholder(ModelBase):  #Non-standard attr names
     super().__init__(locals())
 
 
-class IsPresentPlaceholder(ModelBase):  #Non-standard attr names
+class IsPresentPlaceholder(ModelBase):  # Non-standard attr names
   """Represents the command-line argument placeholder that will be replaced at run-time by a boolean value specifying whether the caller has passed an argument for the specified optional input."""
   _serialized_names = {
       'input_name': 'isPresent',
@@ -220,7 +234,7 @@ IfConditionArgumentType = Union[bool, str, IsPresentPlaceholder,
                                 InputValuePlaceholder]
 
 
-class IfPlaceholderStructure(ModelBase):  #Non-standard attr names
+class IfPlaceholderStructure(ModelBase):  # Non-standard attr names
   """Used in by the IfPlaceholder - the command-line argument placeholder that will be replaced at run-time by the expanded value of either "then_value" or "else_value" depending on the submissio-time resolved value of the "cond" predicate."""
   _serialized_names = {
       'condition': 'cond',
@@ -238,7 +252,7 @@ class IfPlaceholderStructure(ModelBase):  #Non-standard attr names
     super().__init__(locals())
 
 
-class IfPlaceholder(ModelBase):  #Non-standard attr names
+class IfPlaceholder(ModelBase):  # Non-standard attr names
   """Represents the command-line argument placeholder that will be replaced at run-time by the expanded value of either "then_value" or "else_value" depending on the submissio-time resolved value of the "cond" predicate."""
   _serialized_names = {
       'if_structure': 'if',
@@ -251,21 +265,12 @@ class IfPlaceholder(ModelBase):  #Non-standard attr names
     super().__init__(locals())
 
 
-class FullInputPlaceholder(ModelBase):
-  """A placeholder that represents the whole input of this component in JSON.
-
-  TODO(numerology): Add an example.
-  """
-
-  def __init__(self):
-    super().__init__(locals())
-
-
 class ContainerSpec(ModelBase):
   """Describes the container component implementation."""
   _serialized_names = {
       'file_outputs':
-          'fileOutputs',  #TODO: rename to something like legacy_unconfigurable_output_paths
+        'fileOutputs',
+      # TODO: rename to something like legacy_unconfigurable_output_paths
   }
 
   def __init__(
@@ -275,8 +280,9 @@ class ContainerSpec(ModelBase):
       args: Optional[List[CommandlineArgumentType]] = None,
       env: Optional[Mapping[str, str]] = None,
       file_outputs: Optional[Mapping[
-          str,
-          str]] = None,  #TODO: rename to something like legacy_unconfigurable_output_paths
+        str,
+        str]] = None,
+      # TODO: rename to something like legacy_unconfigurable_output_paths
   ):
     super().__init__(locals())
 
@@ -313,20 +319,20 @@ class ComponentSpec(ModelBase):
 
   def __init__(
       self,
-      name: Optional[str] = None,  #? Move to metadata?
-      description: Optional[str] = None,  #? Move to metadata?
+      name: Optional[str] = None,  # ? Move to metadata?
+      description: Optional[str] = None,  # ? Move to metadata?
       metadata: Optional[MetadataSpec] = None,
       inputs: Optional[List[InputSpec]] = None,
       outputs: Optional[List[OutputSpec]] = None,
       implementation: Optional[ImplementationType] = None,
       version: Optional[str] = 'google.com/cloud/pipelines/component/v1',
-      #tags: Optional[Set[str]] = None,
+      # tags: Optional[Set[str]] = None,
   ):
     super().__init__(locals())
     self._post_init()
 
   def _post_init(self):
-    #Checking input names for uniqueness
+    # Checking input names for uniqueness
     self._inputs_dict = {}
     if self.inputs:
       for input in self.inputs:
@@ -334,7 +340,7 @@ class ComponentSpec(ModelBase):
           raise ValueError('Non-unique input name "{}"'.format(input.name))
         self._inputs_dict[input.name] = input
 
-    #Checking output names for uniqueness
+    # Checking output names for uniqueness
     self._outputs_dict = {}
     if self.outputs:
       for output in self.outputs:
@@ -350,12 +356,12 @@ class ComponentSpec(ModelBase):
           if output_name not in self._outputs_dict:
             raise TypeError(
                 'Unconfigurable output entry "{}" references non-existing output.'
-                .format({output_name: path}))
+                  .format({output_name: path}))
 
       def verify_arg(arg):
         if arg is None:
           pass
-        elif isinstance(arg, (str, int, float, bool)):
+        elif isinstance(arg, (str, int, float, bool, FullInputPlaceholder)):
           pass
         elif isinstance(arg, list):
           for arg2 in arg:
@@ -390,7 +396,7 @@ class ComponentSpec(ModelBase):
           if output_name not in self._outputs_dict:
             raise TypeError(
                 'Graph output argument entry "{}" references non-existing output.'
-                .format({output_name: argument}))
+                  .format({output_name: argument}))
 
       if graph.tasks is not None:
         for task in graph.tasks.values():
@@ -448,7 +454,7 @@ class GraphInputReference(ModelBase):
       self,
       input_name: str,
       type: Optional[
-          TypeSpecType] = None,  # Can be used to override the reference data type
+        TypeSpecType] = None,  # Can be used to override the reference data type
   ):
     super().__init__(locals())
 
@@ -489,11 +495,13 @@ class TaskOutputReference(ModelBase):
       self,
       output_name: str,
       task_id: Optional[
-          str] = None,  # Used for linking to the upstream task in serialized component file.
+        str] = None,
+      # Used for linking to the upstream task in serialized component file.
       task: Optional[
-          'TaskSpec'] = None,  # Used for linking to the upstream task in runtime since Task does not have an ID until inserted into a graph.
+        'TaskSpec'] = None,
+      # Used for linking to the upstream task in runtime since Task does not have an ID until inserted into a graph.
       type: Optional[
-          TypeSpecType] = None,  # Can be used to override the reference data type
+        TypeSpecType] = None,  # Can be used to override the reference data type
   ):
     super().__init__(locals())
     if self.task_id is None and self.task is None:
@@ -512,7 +520,7 @@ class TaskOutputReference(ModelBase):
 
 
 class TaskOutputArgument(ModelBase
-                        ):  #Has additional constructor for convenience
+                         ):  # Has additional constructor for convenience
   """Represents the component argument value that comes from the output of another task."""
   _serialized_names = {
       'task_output': 'taskOutput',
@@ -537,7 +545,7 @@ class TaskOutputArgument(ModelBase
 
   def with_type(self, type_spec: TypeSpecType) -> 'TaskOutputArgument':
     return TaskOutputArgument(
-        task_output=self.task_output.with_type(type_spec),)
+        task_output=self.task_output.with_type(type_spec), )
 
   def without_type(self) -> 'TaskOutputArgument':
     return self.with_type(None)
@@ -556,7 +564,7 @@ class TwoOperands(ModelBase):
     super().__init__(locals())
 
 
-class BinaryPredicate(ModelBase):  #abstract base type
+class BinaryPredicate(ModelBase):  # abstract base type
 
   def __init__(self, operands: TwoOperands):
     super().__init__(locals())
@@ -691,10 +699,10 @@ class TaskSpec(ModelBase):
       annotations: Optional[Dict[str, Any]] = None,
   ):
     super().__init__(locals())
-    #TODO: If component_ref is resolved to component spec, then check that the arguments correspond to the inputs
+    # TODO: If component_ref is resolved to component spec, then check that the arguments correspond to the inputs
 
   def _init_outputs(self):
-    #Adding output references to the task
+    # Adding output references to the task
     if self.component_ref.spec is None:
       return
     task_outputs = OrderedDict()
@@ -703,7 +711,8 @@ class TaskSpec(ModelBase):
           output_name=output.name,
           task=self,
           type=output
-          .type,  # TODO: Resolve type expressions. E.g. type: {TypeOf: Input 1}
+            .type,
+          # TODO: Resolve type expressions. E.g. type: {TypeOf: Input 1}
       )
       task_output_arg = TaskOutputArgument(task_output=task_output_ref)
       task_outputs[output.name] = task_output_arg
@@ -733,7 +742,7 @@ class GraphSpec(ModelBase):
     self._post_init()
 
   def _post_init(self):
-    #Checking task output references and preparing the dependency table
+    # Checking task output references and preparing the dependency table
     task_dependencies = {}
     for task_id, task in self.tasks.items():
       dependencies = set()
@@ -747,7 +756,7 @@ class GraphSpec(ModelBase):
                   'Argument "{}" references non-existing task.'.format(
                       argument))
 
-    #Topologically sorting tasks to detect cycles
+    # Topologically sorting tasks to detect cycles
     task_dependents = {k: set() for k in task_dependencies.keys()}
     for task_id, dependencies in task_dependencies.items():
       for dependency in dependencies:
@@ -759,12 +768,12 @@ class GraphSpec(ModelBase):
 
     def process_task(task_id):
       if task_number_of_remaining_dependencies[
-          task_id] == 0 and task_id not in sorted_tasks:
+        task_id] == 0 and task_id not in sorted_tasks:
         sorted_tasks[task_id] = self.tasks[task_id]
         for dependent_task in task_dependents[task_id]:
           task_number_of_remaining_dependencies[
-              dependent_task] = task_number_of_remaining_dependencies[
-                  dependent_task] - 1
+            dependent_task] = task_number_of_remaining_dependencies[
+                                dependent_task] - 1
           process_task(dependent_task)
 
     for task_id in task_dependencies.keys():
@@ -798,12 +807,12 @@ class PipelineRunSpec(ModelBase):
   """The object that can be sent to the backend to start a new Run."""
   _serialized_names = {
       'root_task': 'rootTask',
-      #'on_exit_task': 'onExitTask',
+      # 'on_exit_task': 'onExitTask',
   }
 
   def __init__(
       self,
       root_task: TaskSpec,
-      #on_exit_task: Optional[TaskSpec] = None,
+      # on_exit_task: Optional[TaskSpec] = None,
   ):
     super().__init__(locals())
