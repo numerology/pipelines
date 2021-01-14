@@ -169,6 +169,8 @@ def _configure_logger(logger):
   logger.addHandler(error_handler)
 
 
+
+
 def build_python_component(
     component_func: Callable,
     target_image: str,
@@ -237,6 +239,8 @@ def build_python_component(
 
   component_spec = _func_to_component_spec(
       component_func, base_image=base_image)
+  print(component_spec)
+
 
   if is_new_style:
     # Annotate the component to be a new-styled one.
@@ -255,21 +259,47 @@ def build_python_component(
 
   command_line_args = component_spec.implementation.container.command
 
-  program_launcher_index = command_line_args.index('program_path=$(mktemp)\necho -n "$0" > "$program_path"\npython3 -u "$program_path" "$@"\n')
-  assert program_launcher_index in [2, 3]
+  if is_new_style:
+    # TODO(numerology): Extract this purging logic to a function to dedup.
+    # Replacing the inline code with calling a local program
+    # Before: sh -ec '... && python3 -u ...' 'import sys ...' --param1 ...
+    # After:  python3 -u /ml/main.py --param1 ...
+    program_launcher_index = command_line_args.index(
+        'program_path=$(mktemp)\necho -n "$0" > "$program_path"\npython3 -u '
+        '"$program_path" "$@"\n')
+    assert program_launcher_index in [2, 3]
+    program_code_index = program_launcher_index + 1
+    program_code = command_line_args[program_code_index]
+    program_rel_path = 'ml/main.py'
+    program_container_path = '/' + program_rel_path
 
-  program_code_index = program_launcher_index + 1
-  program_code = command_line_args[program_code_index]
-  program_rel_path = 'ml/main.py'
-  program_container_path = '/' + program_rel_path
+    command_line_args[program_code_index] = program_container_path
+    command_line_args.pop(program_launcher_index)
+    command_line_args[program_launcher_index - 1] = '-u'  # -ec => -u
+    command_line_args[program_launcher_index - 2] = python_version  # sh => python3 or python2
 
-  # Replacing the inline code with calling a local program
-  # Before: sh -ec '... && python3 -u ...' 'import sys ...' --param1 ...
-  # After:  python3 -u main.py --param1 ...
-  command_line_args[program_code_index] = program_container_path
-  command_line_args.pop(program_launcher_index)
-  command_line_args[program_launcher_index - 1] = '-u'  # -ec => -u
-  command_line_args[program_launcher_index - 2] = python_version  # sh => python3
+    # Override user program args for new-styled component.
+    program_args = component_spec.implementation.container.args
+
+
+  else:
+    program_launcher_index = command_line_args.index(
+        'program_path=$(mktemp)\necho -n "$0" > "$program_path"\npython3 -u '
+        '"$program_path" "$@"\n')
+    assert program_launcher_index in [2, 3]
+
+    program_code_index = program_launcher_index + 1
+    program_code = command_line_args[program_code_index]
+    program_rel_path = 'ml/main.py'
+    program_container_path = '/' + program_rel_path
+
+    # Replacing the inline code with calling a local program
+    # Before: sh -ec '... && python3 -u ...' 'import sys ...' --param1 ...
+    # After:  python3 -u ml/main.py --param1 ...
+    command_line_args[program_code_index] = program_container_path
+    command_line_args.pop(program_launcher_index)
+    command_line_args[program_launcher_index - 1] = '-u'  # -ec => -u
+    command_line_args[program_launcher_index - 2] = python_version  # sh => python3
 
   if python_version == 'python2':
     import warnings
@@ -277,6 +307,11 @@ def build_python_component(
 
   arc_docker_filename = 'Dockerfile'
   arc_requirement_filename = 'requirements.txt'
+
+  print('Current component spec command lines')
+  print(command_line_args)
+  print('ARGS:')
+  print(component_spec.implementation.container.args)
 
   with tempfile.TemporaryDirectory() as local_build_dir:
     # Write the program code to a file in the context directory
