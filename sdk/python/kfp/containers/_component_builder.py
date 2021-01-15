@@ -25,7 +25,10 @@ from deprecated.sphinx import deprecated
 from ..components._components import _create_task_factory_from_component_spec
 from ..components._python_op import _func_to_component_spec
 from ._container_builder import ContainerBuilder
+from kfp import components
 from kfp.components import _structures
+from kfp.containers import entrypoint
+
 
 V2_COMPONENT_ANNOTATION = 'pipelines.kubeflow.org/component_v2'
 
@@ -239,7 +242,6 @@ def build_python_component(
 
   component_spec = _func_to_component_spec(
       component_func, base_image=base_image)
-  print(component_spec)
 
 
   if is_v2:
@@ -259,7 +261,7 @@ def build_python_component(
 
   command_line_args = component_spec.implementation.container.command
 
-  if is_new_style:
+  if is_v2:
     # TODO(numerology): Extract this purging logic to a function to dedup.
     # Replacing the inline code with calling a local program
     # Before: sh -ec '... && python3 -u ...' 'import sys ...' --param1 ...
@@ -280,6 +282,40 @@ def build_python_component(
 
     # Override user program args for new-styled component.
     program_args = component_spec.implementation.container.args
+    program_args = []
+    for input in component_spec.inputs:
+      if input._passing_style == components.InputArtifact:
+        # For each input artifact, there'll be possibly 3 arguments passed to
+        # the user program:
+        # 1. {name of the artifact}_input_path: The actual path, or uri, of the
+        #    input artifact.
+        # 2. {name of the artifact}_input_artifact_metadata_file: The metadata
+        #    JSON file path output by the producer.
+        # 3. {name of the artifact}_input_output_name: The output name of the
+        #    artifact, by which the artifact can be found in the producer
+        #    metadata JSON file.
+        program_args.append('--{}{}'.format(
+            input.name,
+            entrypoint.INPUT_PATH_SUFFIX
+        ))
+        program_args.append()
+
+      elif input._passing_style is None:
+        # When passing style is not set, it ought to be a parameter.
+        # For each input parameter, there'll be possibly 3 arguments passed to
+        # the user program:
+        # 1. {name of the parameter}_input_param_metadata_file: The metadata
+        #    JSON file output by the producer.
+        # 2. {name of the parameter}_input_field_name: The output name of the
+        #    parameter, by which the parameter can be found in the producer
+        #    metadata JSON file.
+        # 3. {name of the parameter}_input_argo_param: The actual runtime value
+        #    of the input parameter.
+        pass
+      else:
+        raise TypeError(
+            'Only Input/OutputArtifact and parameter annotations '
+            'are supported in V2 components. Got %s' % input._passing_style)
 
 
   else:
