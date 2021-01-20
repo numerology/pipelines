@@ -276,8 +276,8 @@ def build_python_component(
     # Override user program args for new-styled component.
     program_args = component_spec.implementation.container.args
     program_args = []
-    for input in component_spec.inputs:
-      if input._passing_style == components.InputArtifact:
+    for component_input in component_spec.inputs:
+      if component_input._passing_style == components.InputArtifact:
         # For each input artifact, there'll be possibly 3 arguments passed to
         # the user program:
         # 1. {name of the artifact}_input_path: The actual path, or uri, of the
@@ -288,12 +288,30 @@ def build_python_component(
         #    artifact, by which the artifact can be found in the producer
         #    metadata JSON file.
         program_args.append('--{}{}'.format(
-            input.name,
+            component_input.name,
             entrypoint.INPUT_PATH_SUFFIX
         ))
-        program_args.append()
+        program_args.append(
+            _structures.InputUriPlaceholder(
+                input_name=component_input.name))
+        program_args.append('--{}{}'.format(
+            component_input.name,
+            entrypoint.ARTIFACT_METADATA_SUFFIX
+        ))
+        program_args.append(
+            _structures.InputMetadataPlaceholder(
+                input_name=component_input.name))
+        # TODO(numerology): Consider removing the need of output name
+        # placeholder by letting v2 component output two metadata files per
+        # output.
+        program_args.append('--{}{}'.format(
+            component_input.name,
+            entrypoint.OUTPUT_NAME_SUFFIX
+        ))
+        program_args.append(_structures.InputOutputPortNamePlaceholder(
+            input_name=component_input.name))
 
-      elif input._passing_style is None:
+      elif component_input._passing_style is None:
         # When passing style is not set, it ought to be a parameter.
         # For each input parameter, there'll be possibly 3 arguments passed to
         # the user program:
@@ -304,12 +322,31 @@ def build_python_component(
         #    metadata JSON file.
         # 3. {name of the parameter}_input_argo_param: The actual runtime value
         #    of the input parameter.
-        pass
+        program_args.append('--{}{}'.format(
+            component_input.name,
+            entrypoint.PARAM_METADATA_SUFFIX
+        ))
+        program_args.append(
+            _structures.InputMetadataPlaceholder(
+                input_name=component_input.name))
+        # TODO(numerology): Consider removing the need of output name
+        # placeholder by letting v2 component output two metadata files per
+        # output.
+        program_args.append('--{}{}'.format(
+            component_input.name,
+            entrypoint.FIELD_NAME_SUFFIX
+        ))
+        program_args.append(_structures.InputOutputPortNamePlaceholder(input_name=component_input.name))
+        program_args.append('--{}{}'.format(
+            component_input.name,
+            entrypoint.ARGO_PARAM_SUFFIX
+        ))
+        program_args.append(_structures.InputValuePlaceholder(
+            input_name=component_input.name))
       else:
         raise TypeError(
             'Only Input/OutputArtifact and parameter annotations '
-            'are supported in V2 components. Got %s' % input._passing_style)
-
+            'are supported in V2 components. Got %s' % component_input._passing_style)
 
   else:
     program_launcher_index = command_line_args.index(
