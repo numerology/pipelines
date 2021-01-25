@@ -185,7 +185,7 @@ def _purge_program_launching_code(
     python_version: str,
     entrypoint_container_path: str
 ) -> str:
-  """Replacing the inline Python code with calling a local program.
+  """Replaces the inline Python code with calling a local program.
 
   For example,
   Before: sh -ec '... && python3 -u ...' 'import sys ...' --param1 ...
