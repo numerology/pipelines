@@ -24,19 +24,20 @@ MLMD_PORT_ENV = 'METADATA_GRPC_SERVICE_PORT'
 
 def _get_metadata_connection_config(
 ) -> metadata_store_pb2.MetadataStoreClientConfig:
-  """Constructs the metadata grpc connection config.
+    """Constructs the metadata grpc connection config.
 
-  Returns:
-    A metadata_store_pb2.MetadataStoreClientConfig object.
-  """
-  connection_config = metadata_store_pb2.MetadataStoreClientConfig()
-  connection_config.host = os.getenv(MLMD_HOST_ENV)
-  connection_config.port = int(os.getenv(MLMD_PORT_ENV))
+    Returns:
+      A metadata_store_pb2.MetadataStoreClientConfig object.
+    """
+    connection_config = metadata_store_pb2.MetadataStoreClientConfig()
+    connection_config.host = os.getenv(MLMD_HOST_ENV)
+    connection_config.port = int(os.getenv(MLMD_PORT_ENV))
 
-  return connection_config
+    return connection_config
+
 
 def main():
-  logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-  logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
 
-  parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser()

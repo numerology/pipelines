@@ -23,27 +23,25 @@ _MAX_INIT_RETRY = 10
 
 
 class Metadata(object):
-  """Helper class to handle interaction with metadata store."""
-  def __init__(
-      self,
-      connection_config: metadata_store_pb2.MetadataStoreClientConfig):
-    for _ in range(_MAX_INIT_RETRY):
-      try:
-        self._store = mlmd.MetadataStore(connection_config)
-      except RuntimeError as err:
-        time.sleep(random.random())
-        continue
-      else:
-        return
+    """Helper class to handle interaction with metadata store."""
 
-    raise RuntimeError('Failed to establish MLMD connection with error.')
+    def __init__(
+            self,
+            connection_config: metadata_store_pb2.MetadataStoreClientConfig):
+        for _ in range(_MAX_INIT_RETRY):
+            try:
+                self._store = mlmd.MetadataStore(connection_config)
+            except RuntimeError as err:
+                time.sleep(random.random())
+                continue
+            else:
+                return
 
-  @property
-  def store(self) -> mlmd.MetadataStore:
-    """Returns underlying MetadataStore."""
-    if self._store is None:
-      raise RuntimeError('Metadata object is not instantiated.')
-    return self._store
+        raise RuntimeError('Failed to establish MLMD connection with error.')
 
-
-
+    @property
+    def store(self) -> mlmd.MetadataStore:
+        """Returns underlying MetadataStore."""
+        if self._store is None:
+            raise RuntimeError('Metadata object is not instantiated.')
+        return self._store
