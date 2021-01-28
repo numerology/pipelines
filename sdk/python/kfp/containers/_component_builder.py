@@ -33,17 +33,19 @@ from kfp.components import _structures
 from kfp.containers import entrypoint
 
 
-V2_COMPONENT_ANNOTATION = 'pipelines.kubeflow.org/component_v2'
-_PROGRAM_LAUNCHER_CMD = 'program_path=$(mktemp)\nprintf "%s" "$0" > '\
-                        '"$program_path"\npython3 -u "$program_path" "$@"\n'
+V2_COMPONENT_ANNOTATION = "pipelines.kubeflow.org/component_v2"
+_PROGRAM_LAUNCHER_CMD = (
+    'program_path=$(mktemp)\nprintf "%s" "$0" > '
+    '"$program_path"\npython3 -u "$program_path" "$@"\n'
+)
 
 
 class VersionedDependency(object):
     """ DependencyVersion specifies the versions """
 
     def __init__(self, name, version=None, min_version=None, max_version=None):
-        """ if version is specified, no need for min_version or max_version;
-         if both are specified, version is adopted """
+        """if version is specified, no need for min_version or max_version;
+        if both are specified, version is adopted"""
         self._name = name
         if version is not None:
             self._min_version = version
@@ -86,7 +88,7 @@ class DependencyHelper(object):
     """ DependencyHelper manages software dependency information """
 
     def __init__(self):
-        self._PYTHON_PACKAGE = 'PYTHON_PACKAGE'
+        self._PYTHON_PACKAGE = "PYTHON_PACKAGE"
         self._dependency = {self._PYTHON_PACKAGE: OrderedDict()}
 
     @property
@@ -94,7 +96,7 @@ class DependencyHelper(object):
         return self._dependency[self._PYTHON_PACKAGE]
 
     def add_python_package(self, dependency, override=True):
-        """ add_single_python_package adds a dependency for the python package
+        """add_single_python_package adds a dependency for the python package
 
         Args:
           name: package name
@@ -107,25 +109,25 @@ class DependencyHelper(object):
         self.python_packages[dependency.name] = dependency
 
     def generate_pip_requirements(self, target_file):
-        """ write the python packages to a requirement file
-        the generated file follows the order of which the packages are added """
-        with open(target_file, 'w') as f:
+        """write the python packages to a requirement file
+        the generated file follows the order of which the packages are added"""
+        with open(target_file, "w") as f:
             for name, version in self.python_packages.items():
                 version = self.python_packages[name]
-                version_str = ''
+                version_str = ""
                 if version.has_min_version():
-                    version_str += ' >= ' + version.min_version + ','
+                    version_str += " >= " + version.min_version + ","
                 if version.has_max_version():
-                    version_str += ' <= ' + version.max_version + ','
-                f.write(name + version_str.rstrip(',') + '\n')
+                    version_str += " <= " + version.max_version + ","
+                f.write(name + version_str.rstrip(",") + "\n")
 
 
-def _dependency_to_requirements(dependency=[], filename='requirements.txt'):
+def _dependency_to_requirements(dependency=[], filename="requirements.txt"):
     """
-      Generates a requirement file based on the dependency
-      Args:
-        dependency (list): a list of VersionedDependency, which includes the package name and versions
-        filename (str): requirement file name, default as requirements.txt
+    Generates a requirement file based on the dependency
+    Args:
+      dependency (list): a list of VersionedDependency, which includes the package name and versions
+      filename (str): requirement file name, default as requirements.txt
     """
     dependency_helper = DependencyHelper()
     for version in dependency:
@@ -134,67 +136,74 @@ def _dependency_to_requirements(dependency=[], filename='requirements.txt'):
 
 
 def _generate_dockerfile(
-        filename: str,
-        base_image: str,
-        python_version: str,
-        requirement_filename: Optional[str] = None,
-        add_files: Optional[Dict[str, str]] = None):
+    filename: str,
+    base_image: str,
+    python_version: str,
+    requirement_filename: Optional[str] = None,
+    add_files: Optional[Dict[str, str]] = None,
+):
     """
-      generates dockerfiles
-      Args:
-        filename (str): target file name for the dockerfile.
-        base_image (str): the base image name.
-        python_version (str): choose python2 or python3
-        requirement_filename (str): requirement file name
-        add_files (Dict[str, str]): Map containing the files thats should be added to the container. add_files maps the build context relative source paths to the container destination paths.
+    generates dockerfiles
+    Args:
+      filename (str): target file name for the dockerfile.
+      base_image (str): the base image name.
+      python_version (str): choose python2 or python3
+      requirement_filename (str): requirement file name
+      add_files (Dict[str, str]): Map containing the files thats should be added to the container. add_files maps the build context relative source paths to the container destination paths.
     """
-    if python_version not in ['python2', 'python3']:
-        raise ValueError('python_version has to be either python2 or python3')
-    with open(filename, 'w') as f:
-        f.write('FROM ' + base_image + '\n')
-        if python_version == 'python3':
+    if python_version not in ["python2", "python3"]:
+        raise ValueError("python_version has to be either python2 or python3")
+    with open(filename, "w") as f:
+        f.write("FROM " + base_image + "\n")
+        if python_version == "python3":
             f.write(
-                'RUN apt-get update -y && apt-get install --no-install-recommends -y -q python3 python3-pip python3-setuptools\n')
+                "RUN apt-get update -y && apt-get install --no-install-recommends -y -q python3 python3-pip python3-setuptools\n"
+            )
         else:
             f.write(
-                'RUN apt-get update -y && apt-get install --no-install-recommends -y -q python python-pip python-setuptools\n')
+                "RUN apt-get update -y && apt-get install --no-install-recommends -y -q python python-pip python-setuptools\n"
+            )
         if requirement_filename is not None:
-            f.write('ADD ' + requirement_filename + ' /ml/requirements.txt\n')
-            if python_version == 'python3':
-                f.write('RUN python3 -m pip install -r /ml/requirements.txt\n')
+            f.write("ADD " + requirement_filename + " /ml/requirements.txt\n")
+            if python_version == "python3":
+                f.write("RUN python3 -m pip install -r /ml/requirements.txt\n")
             else:
-                f.write('RUN python -m pip install -r /ml/requirements.txt\n')
+                f.write("RUN python -m pip install -r /ml/requirements.txt\n")
 
         for src_path, dst_path in (add_files or {}).items():
-            f.write('ADD ' + src_path + ' ' + dst_path + '\n')
+            f.write("ADD " + src_path + " " + dst_path + "\n")
 
 
 def _configure_logger(logger):
-    """ _configure_logger configures the logger such that the info level logs
+    """_configure_logger configures the logger such that the info level logs
     go to the stdout and the error(or above) level logs go to the stderr.
-    It is important for the Jupyter notebook log rendering """
-    if hasattr(_configure_logger, 'configured'):
+    It is important for the Jupyter notebook log rendering"""
+    if hasattr(_configure_logger, "configured"):
         # Skip the logger configuration the second time this function
         # is called to avoid multiple streamhandlers bound to the logger.
         return
-    setattr(_configure_logger, 'configured', 'true')
+    setattr(_configure_logger, "configured", "true")
     logger.setLevel(logging.INFO)
     info_handler = logging.StreamHandler(stream=sys.stdout)
     info_handler.addFilter(lambda record: record.levelno <= logging.INFO)
-    info_handler.setFormatter(logging.Formatter(
-        '%(asctime)s:%(levelname)s:%(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    info_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s:%(levelname)s:%(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
+    )
     error_handler = logging.StreamHandler(sys.stderr)
     error_handler.addFilter(lambda record: record.levelno > logging.INFO)
-    error_handler.setFormatter(logging.Formatter(
-        '%(asctime)s:%(levelname)s:%(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+    error_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s:%(levelname)s:%(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
+    )
     logger.addHandler(info_handler)
     logger.addHandler(error_handler)
 
 
 def _purge_program_launching_code(
-    commands: List[str],
-    python_version: str,
-    entrypoint_container_path: str
+    commands: List[str], python_version: str, entrypoint_container_path: str
 ) -> str:
     """Replaces the inline Python code with calling a local program.
 
@@ -218,7 +227,7 @@ def _purge_program_launching_code(
 
     commands[program_code_index] = entrypoint_container_path
     commands.pop(program_launcher_index)
-    commands[program_launcher_index - 1] = '-u'  # -ec => -u
+    commands[program_launcher_index - 1] = "-u"  # -ec => -u
     # sh => python3 or python2
     commands[program_launcher_index - 2] = python_version
     return result
@@ -233,8 +242,8 @@ def build_python_component(
     timeout: int = 600,
     namespace: Optional[str] = None,
     target_component_file: Optional[str] = None,
-    python_version: str = 'python3',
-    is_v2: bool = False
+    python_version: str = "python3",
+    is_v2: bool = False,
 ):
     """build_component automatically builds a container image for the
     component_func based on the base_image and pushes to the target_image.
@@ -267,36 +276,38 @@ def build_python_component(
     _configure_logger(logging.getLogger())
 
     if component_func is None:
-        raise ValueError('component_func must not be None')
+        raise ValueError("component_func must not be None")
     if target_image is None:
-        raise ValueError('target_image must not be None')
+        raise ValueError("target_image must not be None")
 
-    if python_version not in ['python2', 'python3']:
-        raise ValueError('python_version has to be either python2 or python3')
+    if python_version not in ["python2", "python3"]:
+        raise ValueError("python_version has to be either python2 or python3")
 
-    if python_version == 'python2':
-        warnings.warn('Python2 is not longer supported')
+    if python_version == "python2":
+        warnings.warn("Python2 is not longer supported")
 
     if staging_gcs_path is None:
-        raise ValueError('staging_gcs_path must not be None')
+        raise ValueError("staging_gcs_path must not be None")
 
     if base_image is None:
-        base_image = getattr(component_func, '_component_base_image', None)
+        base_image = getattr(component_func, "_component_base_image", None)
     if base_image is None:
         from ..components._python_op import default_base_image_or_builder
+
         base_image = default_base_image_or_builder
         if isinstance(base_image, Callable):
             base_image = base_image()
     if not dependency:
         dependency = []
 
-    logging.info('Build an image that is based on ' +
-                 base_image +
-                 ' and push the image to ' +
-                 target_image)
+    logging.info(
+        "Build an image that is based on "
+        + base_image
+        + " and push the image to "
+        + target_image
+    )
 
-    component_spec = _func_to_component_spec(
-        component_func, base_image=base_image)
+    component_spec = _func_to_component_spec(component_func, base_image=base_image)
 
     if is_v2:
         # Annotate the component to be a V2 one.
@@ -304,24 +315,25 @@ def build_python_component(
             component_spec.metadata = _structures.MetadataSpec()
         if not component_spec.metadata.annotations:
             component_spec.metadata.annotations = {}
-        component_spec.metadata.annotations[V2_COMPONENT_ANNOTATION] = 'true'
+        component_spec.metadata.annotations[V2_COMPONENT_ANNOTATION] = "true"
 
     command_line_args = component_spec.implementation.container.command
 
     # The relative path to put the Python program code.
-    program_path = 'ml/main.py'
+    program_path = "ml/main.py"
     # The relative path used when building a V2 component.
     v2_entrypoint_path = None
     # Python program code extracted from the component spec.
     program_code = None
 
     if is_v2:
-        v2_entrypoint_path = 'ml/entrypoint.py'
+        v2_entrypoint_path = "ml/entrypoint.py"
 
         program_code = _purge_program_launching_code(
             commands=command_line_args,
             python_version=python_version,
-            entrypoint_container_path='/' + v2_entrypoint_path)
+            entrypoint_container_path="/" + v2_entrypoint_path,
+        )
 
         print(component_spec.implementation.container.args)
         # Override user program args for new-styled component.
@@ -337,21 +349,20 @@ def build_python_component(
                 # 3. {name of the artifact}_input_output_name: The output name of the
                 #    artifact, by which the artifact can be found in the producer
                 #    metadata JSON file.
-                program_args.append('--{}{}'.format(
-                    component_input.name,
-                    entrypoint.INPUT_PATH_SUFFIX
-                ))
                 program_args.append(
-                    _structures.InputUriPlaceholder(
-                        input_name=component_input.name))
-                program_args.append('--{}{}'.format(
-                    component_input.name,
-                    '_pod_name'
-                ))
+                    "--{}{}".format(component_input.name, entrypoint.INPUT_PATH_SUFFIX)
+                )
                 program_args.append(
-                    '{{{{inputs.parameters.{input}}}}}'.format(
+                    _structures.InputUriPlaceholder(input_name=component_input.name)
+                )
+                program_args.append("--{}{}".format(component_input.name, "_pod_name"))
+                program_args.append(
+                    "{{{{inputs.parameters.{input}}}}}".format(
                         input=_components.PRODUCER_POD_NAME_PARAMETER.format(
-                            component_input.name)))
+                            component_input.name
+                        )
+                    )
+                )
                 # program_args.append('--{}{}'.format(
                 #     component_input.name,
                 #     entrypoint.ARTIFACT_METADATA_SUFFIX
@@ -362,12 +373,14 @@ def build_python_component(
                 # TODO(numerology): Consider removing the need of output name
                 # placeholder by letting v2 component output two metadata files per
                 # output.
-                program_args.append('--{}{}'.format(
-                    component_input.name,
-                    entrypoint.OUTPUT_NAME_SUFFIX
-                ))
-                program_args.append(_structures.InputOutputPortNamePlaceholder(
-                    input_name=component_input.name))
+                program_args.append(
+                    "--{}{}".format(component_input.name, entrypoint.OUTPUT_NAME_SUFFIX)
+                )
+                program_args.append(
+                    _structures.InputOutputPortNamePlaceholder(
+                        input_name=component_input.name
+                    )
+                )
 
             elif component_input._passing_style is None:
                 # When passing style is not set, it ought to be a parameter.
@@ -380,47 +393,54 @@ def build_python_component(
                 #    metadata JSON file.
                 # 3. {name of the parameter}_input_argo_param: The actual runtime value
                 #    of the input parameter.
-                program_args.append('--{}{}'.format(
-                    component_input.name,
-                    entrypoint.PARAM_METADATA_SUFFIX
-                ))
+                program_args.append(
+                    "--{}{}".format(
+                        component_input.name, entrypoint.PARAM_METADATA_SUFFIX
+                    )
+                )
                 program_args.append(
                     _structures.InputMetadataPlaceholder(
-                        input_name=component_input.name))
+                        input_name=component_input.name
+                    )
+                )
                 # TODO(numerology): Consider removing the need of output name
                 # placeholder by letting v2 component output two metadata files per
                 # output.
-                program_args.append('--{}{}'.format(
-                    component_input.name,
-                    entrypoint.FIELD_NAME_SUFFIX
-                ))
-                program_args.append(_structures.InputOutputPortNamePlaceholder(
-                    input_name=component_input.name))
-                program_args.append('--{}{}'.format(
-                    component_input.name,
-                    entrypoint.ARGO_PARAM_SUFFIX
-                ))
-                program_args.append(_structures.InputValuePlaceholder(
-                    input_name=component_input.name))
+                program_args.append(
+                    "--{}{}".format(component_input.name, entrypoint.FIELD_NAME_SUFFIX)
+                )
+                program_args.append(
+                    _structures.InputOutputPortNamePlaceholder(
+                        input_name=component_input.name
+                    )
+                )
+                program_args.append(
+                    "--{}{}".format(component_input.name, entrypoint.ARGO_PARAM_SUFFIX)
+                )
+                program_args.append(
+                    _structures.InputValuePlaceholder(input_name=component_input.name)
+                )
             else:
                 raise TypeError(
-                    'Only Input/OutputArtifact and parameter annotations '
-                    'are supported in V2 components. '
-                    'Got %s' % component_input._passing_style)
+                    "Only Input/OutputArtifact and parameter annotations "
+                    "are supported in V2 components. "
+                    "Got %s" % component_input._passing_style
+                )
         for component_output in component_spec.outputs or []:
             if component_output._passing_style == components.OutputArtifact:
                 # For each input artifact, there'll be possibly 3 arguments passed to
                 # the user program:
                 # 1. {name of the artifact}_output_path: The actual path, or uri, of the
                 #    input artifact.
-                program_args.append('--{}{}'.format(
-                    component_output.name,
-                    entrypoint.OUTPUT_ARTIFACT_PATH_SUFFIX
-                ))
                 program_args.append(
-                    _structures.OutputUriPlaceholder(
-                        output_name=component_output.name))
-        program_args.append('--pipeline_context')
+                    "--{}{}".format(
+                        component_output.name, entrypoint.OUTPUT_ARTIFACT_PATH_SUFFIX
+                    )
+                )
+                program_args.append(
+                    _structures.OutputUriPlaceholder(output_name=component_output.name)
+                )
+        program_args.append("--pipeline_context")
         program_args.append(dsl.RUN_ID_PLACEHOLDER)
 
         component_spec.implementation.container.args = program_args
@@ -428,10 +448,11 @@ def build_python_component(
         program_code = _purge_program_launching_code(
             commands=command_line_args,
             python_version=python_version,
-            entrypoint_container_path='/' + program_path)
+            entrypoint_container_path="/" + program_path,
+        )
 
-    arc_docker_filename = 'Dockerfile'
-    arc_requirement_filename = 'requirements.txt'
+    arc_docker_filename = "Dockerfile"
+    arc_requirement_filename = "requirements.txt"
 
     with tempfile.TemporaryDirectory() as local_build_dir:
         # Write the program code to a file in the context directory
@@ -440,53 +461,66 @@ def build_python_component(
         if is_v2:
             # If this is a v2 component, use the predefined entrypoint.
             local_entrypoint_filepath = os.path.join(
-                local_build_dir, v2_entrypoint_path)
-            shutil.copyfile(os.path.join(os.path.dirname(__file__), 'entrypoint.py'),
-                            local_entrypoint_filepath)
+                local_build_dir, v2_entrypoint_path
+            )
+            shutil.copyfile(
+                os.path.join(os.path.dirname(__file__), "entrypoint.py"),
+                local_entrypoint_filepath,
+            )
 
-        with open(local_python_filepath, 'w') as f:
+        with open(local_python_filepath, "w") as f:
             f.write(program_code)
 
         # Generate the python package requirements file in the context directory
         local_requirement_filepath = os.path.join(
-            local_build_dir, arc_requirement_filename)
+            local_build_dir, arc_requirement_filename
+        )
         if is_v2:
             # For v2 components, KFP are expected to be packed in the container.
-            dependency.append(VersionedDependency(name='kfp'))
+            dependency.append(VersionedDependency(name="kfp"))
 
         _dependency_to_requirements(dependency, local_requirement_filepath)
 
         # Generate Dockerfile in the context directory
-        local_docker_filepath = os.path.join(
-            local_build_dir, arc_docker_filename)
-        add_files = {program_path: '/' + program_path}
+        local_docker_filepath = os.path.join(local_build_dir, arc_docker_filename)
+        add_files = {program_path: "/" + program_path}
         if is_v2:
-            add_files[v2_entrypoint_path] = '/' + v2_entrypoint_path
+            add_files[v2_entrypoint_path] = "/" + v2_entrypoint_path
 
         _generate_dockerfile(
-            local_docker_filepath, base_image, python_version,
+            local_docker_filepath,
+            base_image,
+            python_version,
             arc_requirement_filename,
-            add_files=add_files)
+            add_files=add_files,
+        )
 
-        logging.info('Building and pushing container image.')
+        logging.info("Building and pushing container image.")
         # container_builder = ContainerBuilder(staging_gcs_path, target_image, namespace)
         # image_name_with_digest = container_builder.build(local_build_dir, arc_docker_filename, target_image, timeout)
 
-    component_spec.implementation.container.image = 'dummy-image'  # image_name_with_digest
+    component_spec.implementation.container.image = (
+        "dummy-image"  # image_name_with_digest
+    )
 
     # Optionally writing the component definition to a local file for sharing
     target_component_file = target_component_file or getattr(
-        component_func, '_component_target_component_file', None)
+        component_func, "_component_target_component_file", None
+    )
     if target_component_file:
         component_spec.save(target_component_file)
 
-    task_factory_function = _create_task_factory_from_component_spec(
-        component_spec)
+    task_factory_function = _create_task_factory_from_component_spec(component_spec)
     return task_factory_function
 
 
-@deprecated(version='0.1.32', reason='`build_docker_image` is deprecated. Use `kfp.containers.build_image_from_working_dir` instead.')
-def build_docker_image(staging_gcs_path, target_image, dockerfile_path, timeout=600, namespace=None):
+@deprecated(
+    version="0.1.32",
+    reason="`build_docker_image` is deprecated. Use `kfp.containers.build_image_from_working_dir` instead.",
+)
+def build_docker_image(
+    staging_gcs_path, target_image, dockerfile_path, timeout=600, namespace=None
+):
     """build_docker_image automatically builds a container image based on the specification in the dockerfile and
     pushes to the target_image.
 
@@ -496,20 +530,21 @@ def build_docker_image(staging_gcs_path, target_image, dockerfile_path, timeout=
       dockerfile_path (str): local path to the dockerfile
       timeout (int): the timeout for the image build(in secs), default is 600 seconds
       namespace (str): the namespace within which to run the kubernetes kaniko job. Default is None. If the
-      job is running on GKE and value is None the underlying functions will use the default namespace from GKE.  
+      job is running on GKE and value is None the underlying functions will use the default namespace from GKE.
     """
     _configure_logger(logging.getLogger())
 
     with tempfile.TemporaryDirectory() as local_build_dir:
-        dockerfile_rel_path = 'Dockerfile'
-        dst_dockerfile_path = os.path.join(
-            local_build_dir, dockerfile_rel_path)
+        dockerfile_rel_path = "Dockerfile"
+        dst_dockerfile_path = os.path.join(local_build_dir, dockerfile_rel_path)
         shutil.copyfile(dockerfile_path, dst_dockerfile_path)
 
         container_builder = ContainerBuilder(
-            staging_gcs_path, target_image, namespace=namespace)
+            staging_gcs_path, target_image, namespace=namespace
+        )
         image_name_with_digest = container_builder.build(
-            local_build_dir, dockerfile_rel_path, target_image, timeout)
+            local_build_dir, dockerfile_rel_path, target_image, timeout
+        )
 
-    logging.info('Build image complete.')
+    logging.info("Build image complete.")
     return image_name_with_digest

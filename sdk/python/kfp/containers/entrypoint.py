@@ -23,29 +23,31 @@ from kfp.containers import _gcs_helper
 from kfp.containers import entrypoint_utils
 from kfp.dsl import artifact
 
-FN_SOURCE = 'ml/main.py'
-FN_NAME_ARG = 'function_name'
+FN_SOURCE = "ml/main.py"
+FN_NAME_ARG = "function_name"
 
-PARAM_METADATA_SUFFIX = '_input_param_metadata_file'
-ARTIFACT_METADATA_SUFFIX = '_input_artifact_metadata_file'
-FIELD_NAME_SUFFIX = '_input_field_name'
-ARGO_PARAM_SUFFIX = '_input_argo_param'
-INPUT_PATH_SUFFIX = '_input_path'
-OUTPUT_NAME_SUFFIX = '_input_output_name'
+PARAM_METADATA_SUFFIX = "_input_param_metadata_file"
+ARTIFACT_METADATA_SUFFIX = "_input_artifact_metadata_file"
+FIELD_NAME_SUFFIX = "_input_field_name"
+ARGO_PARAM_SUFFIX = "_input_argo_param"
+INPUT_PATH_SUFFIX = "_input_path"
+OUTPUT_NAME_SUFFIX = "_input_output_name"
 
-OUTPUT_PARAM_PATH_SUFFIX = '_parameter_output_path'
-OUTPUT_ARTIFACT_PATH_SUFFIX = '_artifact_output_path'
+OUTPUT_PARAM_PATH_SUFFIX = "_parameter_output_path"
+OUTPUT_ARTIFACT_PATH_SUFFIX = "_artifact_output_path"
 
-METADATA_FILE_ARG = 'executor_metadata_json_file'
+METADATA_FILE_ARG = "executor_metadata_json_file"
 
 
 class InputParam(object):
     """POD that holds an input parameter."""
 
-    def __init__(self,
-                 value: Optional[Union[str, float, int]] = None,
-                 metadata_file: Optional[str] = None,
-                 field_name: Optional[str] = None):
+    def __init__(
+        self,
+        value: Optional[Union[str, float, int]] = None,
+        metadata_file: Optional[str] = None,
+        field_name: Optional[str] = None,
+    ):
         """Instantiates an InputParam object.
 
         Args:
@@ -59,21 +61,25 @@ class InputParam(object):
             1) value is provided, and metadata_file and field_name are not; or
             2) both metadata_file and field_name are provided, and value is not.
         """
-        if not (value is not None and not (metadata_file or field_name) or (
-                metadata_file and field_name and value is None)):
-            raise ValueError('Either value or both metadata_file and field_name '
-                             'needs to be provided. Got value={value}, field_name='
-                             '{field_name}, metadata_file={metadata_file}'.format(
-                                 value=value,
-                                 field_name=field_name,
-                                 metadata_file=metadata_file
-                             ))
+        if not (
+            value is not None
+            and not (metadata_file or field_name)
+            or (metadata_file and field_name and value is None)
+        ):
+            raise ValueError(
+                "Either value or both metadata_file and field_name "
+                "needs to be provided. Got value={value}, field_name="
+                "{field_name}, metadata_file={metadata_file}".format(
+                    value=value, field_name=field_name, metadata_file=metadata_file
+                )
+            )
         if value is not None:
             self._value = value
         else:
             # Parse the value by inspecting the producer's metadata JSON file.
             self._value = entrypoint_utils.get_parameter_from_output(
-                metadata_file, field_name)
+                metadata_file, field_name
+            )
 
         self._metadata_file = metadata_file
         self._field_name = field_name
@@ -95,11 +101,12 @@ class InputParam(object):
 class InputArtifact(object):
     """POD that holds an input artifact."""
 
-    def __init__(self,
-                 uri: Optional[str] = None,
-                 metadata_file: Optional[str] = None,
-                 output_name: Optional[str] = None
-                 ):
+    def __init__(
+        self,
+        uri: Optional[str] = None,
+        metadata_file: Optional[str] = None,
+        output_name: Optional[str] = None,
+    ):
         """Instantiates an InputParam object.
 
         Args:
@@ -113,15 +120,20 @@ class InputArtifact(object):
             1) uri is provided, and metadata_file and output_name are not; or
             2) both metadata_file and output_name are provided, and uri is not.
         """
-        if not ((uri and not (metadata_file or output_name) or (
-                metadata_file and output_name and not uri))):
-            raise ValueError('Either uri or both metadata_file and output_name '
-                             'needs to be provided. Got uri={uri}, output_name='
-                             '{output_name}, metadata_file={metadata_file}'.format(
-                                 uri=uri,
-                                 output_name=output_name,
-                                 metadata_file=metadata_file
-                             ))
+        if not (
+            (
+                uri
+                and not (metadata_file or output_name)
+                or (metadata_file and output_name and not uri)
+            )
+        ):
+            raise ValueError(
+                "Either uri or both metadata_file and output_name "
+                "needs to be provided. Got uri={uri}, output_name="
+                "{output_name}, metadata_file={metadata_file}".format(
+                    uri=uri, output_name=output_name, metadata_file=metadata_file
+                )
+            )
 
         self._metadata_file = metadata_file
         self._output_name = output_name
@@ -147,11 +159,11 @@ class InputArtifact(object):
         """Gets an artifact object by parsing metadata or creating one from uri."""
         if self.metadata_file and self.output_name:
             return entrypoint_utils.get_artifact_from_output(
-                self.metadata_file, self.output_name)
+                self.metadata_file, self.output_name
+            )
         else:
             # Provide an empty schema when returning a raw Artifact.
-            result = artifact.Artifact(
-                instance_schema=artifact.DEFAULT_ARTIFACT_SCHEMA)
+            result = artifact.Artifact(instance_schema=artifact.DEFAULT_ARTIFACT_SCHEMA)
             result.uri = self.uri
             return result
 
@@ -196,7 +208,7 @@ def main(**kwargs):
     output metadata JSON file will be written.
     """
     if METADATA_FILE_ARG not in kwargs:
-        raise RuntimeError('Must specify executor_metadata_json_file')
+        raise RuntimeError("Must specify executor_metadata_json_file")
 
     # Group arguments according to suffixes.
     input_params_metadata = {}
@@ -209,54 +221,59 @@ def main(**kwargs):
     output_params_path = {}
     for k, v in kwargs.items():
         if k.endswith(PARAM_METADATA_SUFFIX):
-            param_name = k[:-len(PARAM_METADATA_SUFFIX)]
+            param_name = k[: -len(PARAM_METADATA_SUFFIX)]
             input_params_metadata[param_name] = v
         elif k.endswith(FIELD_NAME_SUFFIX):
-            param_name = k[:-len(FIELD_NAME_SUFFIX)]
+            param_name = k[: -len(FIELD_NAME_SUFFIX)]
             input_params_field_name[param_name] = v
         elif k.endswith(ARGO_PARAM_SUFFIX):
-            param_name = k[:-len(ARGO_PARAM_SUFFIX)]
+            param_name = k[: -len(ARGO_PARAM_SUFFIX)]
             input_params_value[param_name] = v
         elif k.endswith(ARTIFACT_METADATA_SUFFIX):
-            artifact_name = k[:-len(ARTIFACT_METADATA_SUFFIX)]
+            artifact_name = k[: -len(ARTIFACT_METADATA_SUFFIX)]
             input_artifacts_metadata[artifact_name] = v
         elif k.endswith(INPUT_PATH_SUFFIX):
-            artifact_name = k[:-len(INPUT_PATH_SUFFIX)]
+            artifact_name = k[: -len(INPUT_PATH_SUFFIX)]
             input_artifacts_uri[artifact_name] = v
         elif k.endswith(OUTPUT_NAME_SUFFIX):
-            artifact_name = k[:-len(OUTPUT_NAME_SUFFIX)]
+            artifact_name = k[: -len(OUTPUT_NAME_SUFFIX)]
             input_artifacts_output_name[artifact_name] = v
         elif k.endswith(OUTPUT_PARAM_PATH_SUFFIX):
-            param_name = k[:-len(OUTPUT_PARAM_PATH_SUFFIX)]
+            param_name = k[: -len(OUTPUT_PARAM_PATH_SUFFIX)]
             output_params_path[param_name] = v
         elif k.endswith(OUTPUT_ARTIFACT_PATH_SUFFIX):
-            artifact_name = k[:-len(OUTPUT_ARTIFACT_PATH_SUFFIX)]
+            artifact_name = k[: -len(OUTPUT_ARTIFACT_PATH_SUFFIX)]
             output_artifacts_uri[artifact_name] = v
         elif k not in (METADATA_FILE_ARG, FN_NAME_ARG):
             logging.warning(
-                'Got unexpected command line argument: %s=%s Ignoring', k, v)
+                "Got unexpected command line argument: %s=%s Ignoring", k, v
+            )
 
     # Instantiate POD objects.
     input_params = {}
     for param_name in (
-            input_params_value.keys() |
-            input_params_field_name.keys() | input_params_metadata.keys()):
+        input_params_value.keys()
+        | input_params_field_name.keys()
+        | input_params_metadata.keys()
+    ):
         input_param = InputParam(
             value=input_params_value.get(param_name),
             metadata_file=input_params_metadata.get(param_name),
-            field_name=input_params_field_name.get(param_name))
+            field_name=input_params_field_name.get(param_name),
+        )
         input_params[param_name] = input_param
 
     input_artifacts = {}
     for artifact_name in (
-        input_artifacts_uri.keys() |
-        input_artifacts_metadata.keys() |
-        input_artifacts_output_name.keys()
+        input_artifacts_uri.keys()
+        | input_artifacts_metadata.keys()
+        | input_artifacts_output_name.keys()
     ):
         input_artifact = InputArtifact(
             uri=input_artifacts_uri.get(artifact_name),
             metadata_file=input_artifacts_metadata.get(artifact_name),
-            output_name=input_artifacts_output_name.get(artifact_name))
+            output_name=input_artifacts_output_name.get(artifact_name),
+        )
         input_artifacts[artifact_name] = input_artifact
 
     # Import and invoke the user-provided function.
@@ -270,8 +287,7 @@ def main(**kwargs):
 
     fn = entrypoint_utils.import_func_from_source(FN_SOURCE, fn_name)
     # Get the output artifacts and combine them with the provided URIs.
-    output_artifacts = entrypoint_utils.get_output_artifacts(
-        fn, output_artifacts_uri)
+    output_artifacts = entrypoint_utils.get_output_artifacts(fn, output_artifacts_uri)
     invoking_kwargs = {}
     for k, v in output_artifacts.items():
         invoking_kwargs[k] = v
@@ -286,39 +302,40 @@ def main(**kwargs):
     fn_res = fn(**invoking_kwargs)
 
     if isinstance(fn_res, (int, float, str)) and len(output_params_path) != 1:
-        raise RuntimeError('For primitive output a single output param path is '
-                           'expected. Got %s' % output_params_path)
+        raise RuntimeError(
+            "For primitive output a single output param path is "
+            "expected. Got %s" % output_params_path
+        )
 
     if isinstance(fn_res, (int, float, str)):
         output_name = list(output_params_path.keys())[0]
         # Write the output to the provided path.
         _gcs_helper.GCSHelper.write_to_gcs_path(
-            path=output_params_path[output_name],
-            content=str(fn_res))
+            path=output_params_path[output_name], content=str(fn_res)
+        )
     else:
         # When multiple outputs, we'll need to match each field to the output paths.
         for idx, output_name in enumerate(fn_res._fields):
             path = output_params_path[output_name]
-            _gcs_helper.GCSHelper.write_to_gcs_path(
-                path=path,
-                content=str(fn_res[idx]))
+            _gcs_helper.GCSHelper.write_to_gcs_path(path=path, content=str(fn_res[idx]))
 
     # Write output metadata JSON file.
     output_parameters = {}
     if isinstance(fn_res, (int, float, str)):
-        output_parameters['output'] = fn_res
+        output_parameters["output"] = fn_res
     else:
         for idx, output_name in enumerate(fn_res._fields):
             output_parameters[output_name] = fn_res[idx]
 
     executor_output = entrypoint_utils.get_executor_output(
-        output_artifacts=output_artifacts,
-        output_params=output_parameters)
+        output_artifacts=output_artifacts, output_params=output_parameters
+    )
 
     _gcs_helper.GCSHelper.write_to_gcs_path(
         path=kwargs[METADATA_FILE_ARG],
-        content=json_format.MessageToJson(executor_output))
+        content=json_format.MessageToJson(executor_output),
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     fire.Fire(main)

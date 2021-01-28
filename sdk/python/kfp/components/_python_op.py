@@ -13,23 +13,28 @@
 # limitations under the License.
 
 __all__ = [
-    'create_component_from_func',
-    'func_to_container_op',
-    'func_to_component_text',
-    'default_base_image_or_builder',
-    'InputArtifact',
-    'InputPath',
-    'InputTextFile',
-    'InputBinaryFile',
-    'OutputArtifact',
-    'OutputPath',
-    'OutputTextFile',
-    'OutputBinaryFile',
+    "create_component_from_func",
+    "func_to_container_op",
+    "func_to_component_text",
+    "default_base_image_or_builder",
+    "InputArtifact",
+    "InputPath",
+    "InputTextFile",
+    "InputBinaryFile",
+    "OutputArtifact",
+    "OutputPath",
+    "OutputTextFile",
+    "OutputBinaryFile",
 ]
 
 from ._yaml_utils import dump_yaml
 from ._components import _create_task_factory_from_component_spec
-from ._data_passing import serialize_value, get_deserializer_code_for_type_struct, get_serializer_func_for_type_struct, get_canonical_type_struct_for_type
+from ._data_passing import (
+    serialize_value,
+    get_deserializer_code_for_type_struct,
+    get_serializer_func_for_type_struct,
+    get_canonical_type_struct_for_type,
+)
 from ._naming import _make_name_unique_by_adding_index
 from .structures import *
 from . import _structures as structures
@@ -42,27 +47,28 @@ import warnings
 
 import docstring_parser
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 # InputPath(list) or InputPath('JsonObject')
 
+
 class InputPath:
-    '''When creating component from function, :class:`.InputPath` should be used as function parameter annotation to tell the system to pass the *data file path* to the function instead of passing the actual data.'''
+    """When creating component from function, :class:`.InputPath` should be used as function parameter annotation to tell the system to pass the *data file path* to the function instead of passing the actual data."""
 
     def __init__(self, type=None):
         self.type = type
 
 
 class InputTextFile:
-    '''When creating component from function, :class:`.InputTextFile` should be used as function parameter annotation to tell the system to pass the *text data stream* object (`io.TextIOWrapper`) to the function instead of passing the actual data.'''
+    """When creating component from function, :class:`.InputTextFile` should be used as function parameter annotation to tell the system to pass the *text data stream* object (`io.TextIOWrapper`) to the function instead of passing the actual data."""
 
     def __init__(self, type=None):
         self.type = type
 
 
 class InputBinaryFile:
-    '''When creating component from function, :class:`.InputBinaryFile` should be used as function parameter annotation to tell the system to pass the *binary data stream* object (`io.BytesIO`) to the function instead of passing the actual data.'''
+    """When creating component from function, :class:`.InputBinaryFile` should be used as function parameter annotation to tell the system to pass the *binary data stream* object (`io.BytesIO`) to the function instead of passing the actual data."""
 
     def __init__(self, type=None):
         self.type = type
@@ -80,21 +86,21 @@ class InputArtifact:
 
 
 class OutputPath:
-    '''When creating component from function, :class:`.OutputPath` should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a file with the given path instead of returning the data from the function.'''
+    """When creating component from function, :class:`.OutputPath` should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a file with the given path instead of returning the data from the function."""
 
     def __init__(self, type=None):
         self.type = type
 
 
 class OutputTextFile:
-    '''When creating component from function, :class:`.OutputTextFile` should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a given text file stream (`io.TextIOWrapper`) instead of returning the data from the function.'''
+    """When creating component from function, :class:`.OutputTextFile` should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a given text file stream (`io.TextIOWrapper`) instead of returning the data from the function."""
 
     def __init__(self, type=None):
         self.type = type
 
 
 class OutputBinaryFile:
-    '''When creating component from function, :class:`.OutputBinaryFile` should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a given binary file stream (:code:`io.BytesIO`) instead of returning the data from the function.'''
+    """When creating component from function, :class:`.OutputBinaryFile` should be used as function parameter annotation to tell the system that the function wants to output data by writing it into a given binary file stream (:code:`io.BytesIO`) instead of returning the data from the function."""
 
     def __init__(self, type=None):
         self.type = type
@@ -114,6 +120,7 @@ class OutputArtifact:
 
 def _make_parent_dirs_and_return_path(file_path: str):
     import os
+
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     return file_path
 
@@ -121,21 +128,26 @@ def _make_parent_dirs_and_return_path(file_path: str):
 def _parent_dirs_maker_that_returns_open_file(mode: str, encoding: str = None):
     def make_parent_dirs_and_return_path(file_path: str):
         import os
+
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         return open(file_path, mode=mode, encoding=encoding)
+
     return make_parent_dirs_and_return_path
 
 
-default_base_image_or_builder = 'python:3.7'
+default_base_image_or_builder = "python:3.7"
 
 
 def _python_function_name_to_component_name(name):
     import re
-    name_with_spaces = re.sub(' +', ' ', name.replace('_', ' ')).strip(' ')
+
+    name_with_spaces = re.sub(" +", " ", name.replace("_", " ")).strip(" ")
     return name_with_spaces[0].upper() + name_with_spaces[1:]
 
 
-def _capture_function_code_using_cloudpickle(func, modules_to_capture: List[str] = None) -> str:
+def _capture_function_code_using_cloudpickle(
+    func, modules_to_capture: List[str] = None
+) -> str:
     import base64
     import sys
     import cloudpickle
@@ -146,23 +158,22 @@ def _capture_function_code_using_cloudpickle(func, modules_to_capture: List[str]
 
     # Hack to force cloudpickle to capture the whole function instead of just referencing the code file. See https://github.com/cloudpipe/cloudpickle/blob/74d69d759185edaeeac7bdcb7015cfc0c652f204/cloudpickle/cloudpickle.py#L490
     old_modules = {}
-    old_sig = getattr(func, '__signature__', None)
+    old_sig = getattr(func, "__signature__", None)
     try:  # Try is needed to restore the state if something goes wrong
         for module_name in modules_to_capture:
             if module_name in sys.modules:
                 old_modules[module_name] = sys.modules.pop(module_name)
         # Hack to prevent cloudpickle from trying to pickle generic types that might be present in the signature. See https://github.com/cloudpipe/cloudpickle/issues/196
         # Currently the __signature__ is only set by Airflow components as a means to spoof/pass the function signature to _func_to_component_spec
-        if hasattr(func, '__signature__'):
+        if hasattr(func, "__signature__"):
             del func.__signature__
-        func_pickle = base64.b64encode(
-            cloudpickle.dumps(func, pickle.DEFAULT_PROTOCOL))
+        func_pickle = base64.b64encode(cloudpickle.dumps(func, pickle.DEFAULT_PROTOCOL))
     finally:
         sys.modules.update(old_modules)
         if old_sig:
             func.__signature__ = old_sig
 
-    function_loading_code = '''\
+    function_loading_code = """\
 import sys
 try:
     import cloudpickle as _cloudpickle
@@ -181,7 +192,7 @@ except ImportError:
         sys.path.append(site.getusersitepackages())
     import cloudpickle as _cloudpickle
     print("cloudpickle loaded successfully after installing.", file=sys.stderr)
-''' + '''
+""" + """
 pickler_python_version = {pickler_python_version}
 current_python_version = tuple(sys.version_info)
 if (
@@ -198,7 +209,7 @@ import base64
 import pickle
 
 {func_name} = pickle.loads(base64.b64decode({func_pickle}))
-'''.format(
+""".format(
         func_name=func.__name__,
         func_pickle=repr(func_pickle),
         pickler_python_version=repr(tuple(sys.version_info)),
@@ -211,12 +222,12 @@ def strip_type_hints(source_code: str) -> str:
     try:
         return _strip_type_hints_using_lib2to3(source_code)
     except Exception as ex:
-        print('Error when stripping type annotations: ' + str(ex))
+        print("Error when stripping type annotations: " + str(ex))
 
     try:
         return _strip_type_hints_using_strip_hints(source_code)
     except Exception as ex:
-        print('Error when stripping type annotations: ' + str(ex))
+        print("Error when stripping type annotations: " + str(ex))
 
     return source_code
 
@@ -226,8 +237,8 @@ def _strip_type_hints_using_strip_hints(source_code: str) -> str:
 
     # Workaround for https://github.com/abarker/strip-hints/issues/4 , https://bugs.python.org/issue35107
     # I could not repro it though
-    if source_code[-1] != '\n':
-        source_code += '\n'
+    if source_code[-1] != "\n":
+        source_code += "\n"
 
     return strip_string_to_string(source_code, to_empty=True)
 
@@ -240,17 +251,17 @@ def _strip_type_hints_using_lib2to3(source_code: str) -> str:
     from lib2to3 import fixer_base, refactor, fixer_util
 
     class StripAnnotations(fixer_base.BaseFix):
-        PATTERN = r'''
+        PATTERN = r"""
             typed_func_parameter=tname
             |
             typed_func_return_value=funcdef< any+ '->' any+ >
-        '''
+        """
 
         def transform(self, node, results):
-            if 'typed_func_parameter' in results:
+            if "typed_func_parameter" in results:
                 # Delete the annotation part of the function parameter declaration
                 del node.children[1:]
-            elif 'typed_func_return_value' in results:
+            elif "typed_func_return_value" in results:
                 # Delete the return annotation part of the function declaration
                 del node.children[-4:-2]
             return node
@@ -258,13 +269,12 @@ def _strip_type_hints_using_lib2to3(source_code: str) -> str:
     class Refactor(refactor.RefactoringTool):
         def __init__(self, fixers):
             self._fixers = [cls(None, None) for cls in fixers]
-            super().__init__(None, {'print_function': True})
+            super().__init__(None, {"print_function": True})
 
         def get_fixers(self):
             return self._fixers, []
 
-    stripped_code = str(
-        Refactor([StripAnnotations]).refactor_string(source_code, ''))
+    stripped_code = str(Refactor([StripAnnotations]).refactor_string(source_code, ""))
     return stripped_code
 
 
@@ -274,17 +284,20 @@ def _capture_function_code_using_source_copy(func) -> str:
     # Function might be defined in some indented scope (e.g. in another function).
     # We need to handle this and properly dedent the function source code
     func_code = textwrap.dedent(func_code)
-    func_code_lines = func_code.split('\n')
+    func_code_lines = func_code.split("\n")
 
     # Removing possible decorators (can be multiline) until the function definition is found
-    while func_code_lines and not func_code_lines[0].startswith('def '):
+    while func_code_lines and not func_code_lines[0].startswith("def "):
         del func_code_lines[0]
 
     if not func_code_lines:
         raise ValueError(
-            'Failed to dedent and clean up the source of function "{}". It is probably not properly indented.'.format(func.__name__))
+            'Failed to dedent and clean up the source of function "{}". It is probably not properly indented.'.format(
+                func.__name__
+            )
+        )
 
-    func_code = '\n'.join(func_code_lines)
+    func_code = "\n".join(func_code_lines)
 
     # Stripping type annotations to prevent import errors.
     # The most common cases are InputPath/OutputPath and typing.NamedTuple annotations
@@ -294,7 +307,7 @@ def _capture_function_code_using_source_copy(func) -> str:
 
 
 def _extract_component_interface(func: Callable) -> ComponentSpec:
-    single_output_name_const = 'Output'
+    single_output_name_const = "Output"
 
     signature = inspect.signature(func)
     parameters = list(signature.parameters.values())
@@ -308,7 +321,7 @@ def _extract_component_interface(func: Callable) -> ComponentSpec:
     def annotation_to_type_struct(annotation):
         if not annotation or annotation == inspect.Parameter.empty:
             return None
-        if hasattr(annotation, 'to_dict'):
+        if hasattr(annotation, "to_dict"):
             annotation = annotation.to_dict()
         if isinstance(annotation, dict):
             return annotation
@@ -318,7 +331,7 @@ def _extract_component_interface(func: Callable) -> ComponentSpec:
                 return type_struct
             type_name = str(annotation.__name__)
         # Handling typing.ForwardRef('Type_name') (the name was _ForwardRef in python 3.5-3.6)
-        elif hasattr(annotation, '__forward_arg__'):
+        elif hasattr(annotation, "__forward_arg__"):
             type_name = str(annotation.__forward_arg__)
         else:
             type_name = str(annotation)
@@ -337,79 +350,98 @@ def _extract_component_interface(func: Callable) -> ComponentSpec:
         io_name = parameter.name
         if isinstance(
             parameter_annotation,
-            (InputArtifact, InputPath, InputTextFile, InputBinaryFile,
-             OutputArtifact, OutputPath, OutputTextFile, OutputBinaryFile)):
+            (
+                InputArtifact,
+                InputPath,
+                InputTextFile,
+                InputBinaryFile,
+                OutputArtifact,
+                OutputPath,
+                OutputTextFile,
+                OutputBinaryFile,
+            ),
+        ):
             passing_style = type(parameter_annotation)
             parameter_annotation = parameter_annotation.type
-            if parameter.default is not inspect.Parameter.empty and not (passing_style == InputPath and parameter.default is None):
+            if parameter.default is not inspect.Parameter.empty and not (
+                passing_style == InputPath and parameter.default is None
+            ):
                 raise ValueError(
-                    'Path inputs only support default values of None. Default values for outputs are not supported.')
+                    "Path inputs only support default values of None. Default values for outputs are not supported."
+                )
             # Removing the "_path" and "_file" suffixes from the input/output names as the argument passed to the component needs to be the data itself, not local file path.
             # Problem: When accepting file inputs (outputs), the function inside the component receives file paths (or file streams), so it's natural to call the function parameter "something_file_path" (e.g. model_file_path or number_file_path).
             # But from the outside perspective, there are no files or paths - the actual data objects (or references to them) are passed in.
             # It looks very strange when argument passing code looks like this: `component(number_file_path=42)`. This looks like an error since 42 is not a path. It's not even a string.
             # It's much more natural to strip the names of file inputs and outputs of "_file" or "_path" suffixes. Then the argument passing code will look natural: "component(number=42)".
-            if isinstance(parameter.annotation, (InputPath, OutputPath)) and io_name.endswith('_path'):
-                io_name = io_name[0:-len('_path')]
-            if io_name.endswith('_file'):
-                io_name = io_name[0:-len('_file')]
+            if isinstance(
+                parameter.annotation, (InputPath, OutputPath)
+            ) and io_name.endswith("_path"):
+                io_name = io_name[0 : -len("_path")]
+            if io_name.endswith("_file"):
+                io_name = io_name[0 : -len("_file")]
         type_struct = annotation_to_type_struct(parameter_annotation)
         # TODO: Humanize the input/output names
 
         if isinstance(
-                parameter.annotation,
-                (OutputArtifact, OutputPath, OutputTextFile, OutputBinaryFile)):
-            io_name = _make_name_unique_by_adding_index(
-                io_name, output_names, '_')
+            parameter.annotation,
+            (OutputArtifact, OutputPath, OutputTextFile, OutputBinaryFile),
+        ):
+            io_name = _make_name_unique_by_adding_index(io_name, output_names, "_")
             output_names.add(io_name)
             output_spec = OutputSpec(
-                name=io_name,
-                type=type_struct,
-                description=doc_dict.get(parameter.name)
+                name=io_name, type=type_struct, description=doc_dict.get(parameter.name)
             )
             output_spec._passing_style = passing_style
             output_spec._parameter_name = parameter.name
             outputs.append(output_spec)
         else:
-            io_name = _make_name_unique_by_adding_index(
-                io_name, input_names, '_')
+            io_name = _make_name_unique_by_adding_index(io_name, input_names, "_")
             input_names.add(io_name)
             input_spec = InputSpec(
-                name=io_name,
-                type=type_struct,
-                description=doc_dict.get(parameter.name)
+                name=io_name, type=type_struct, description=doc_dict.get(parameter.name)
             )
             if parameter.default is not inspect.Parameter.empty:
                 input_spec.optional = True
                 if parameter.default is not None:
-                    outer_type_name = list(type_struct.keys())[0] if isinstance(
-                        type_struct, dict) else type_struct
+                    outer_type_name = (
+                        list(type_struct.keys())[0]
+                        if isinstance(type_struct, dict)
+                        else type_struct
+                    )
                     try:
                         input_spec.default = serialize_value(
-                            parameter.default, outer_type_name)
+                            parameter.default, outer_type_name
+                        )
                     except Exception as ex:
-                        warnings.warn('Could not serialize the default value of the parameter "{}". {}'.format(
-                            parameter.name, ex))
+                        warnings.warn(
+                            'Could not serialize the default value of the parameter "{}". {}'.format(
+                                parameter.name, ex
+                            )
+                        )
             input_spec._passing_style = passing_style
             input_spec._parameter_name = parameter.name
             inputs.append(input_spec)
 
     # Analyzing the return type annotations.
     return_ann = signature.return_annotation
-    if hasattr(return_ann, '_fields'):  # NamedTuple
+    if hasattr(return_ann, "_fields"):  # NamedTuple
         # Getting field type annotations.
         # __annotations__ does not exist in python 3.5 and earlier
         # _field_types does not exist in python 3.9 and later
-        field_annotations = getattr(return_ann, '__annotations__', None) or getattr(
-            return_ann, '_field_types', None)
+        field_annotations = getattr(return_ann, "__annotations__", None) or getattr(
+            return_ann, "_field_types", None
+        )
         for field_name in return_ann._fields:
             type_struct = None
             if field_annotations:
                 type_struct = annotation_to_type_struct(
-                    field_annotations.get(field_name, None))
+                    field_annotations.get(field_name, None)
+                )
 
             output_name = _make_name_unique_by_adding_index(
-                field_name, output_names, '_')
+                field_name, output_names, "_"
+            )
             output_names.add(output_name)
             output_spec = OutputSpec(
                 name=output_name,
@@ -426,17 +458,20 @@ def _extract_component_interface(func: Callable) -> ComponentSpec:
             "Please use typing.NamedTuple to declare multiple outputs."
         )
         for output_name, output_type_annotation in return_ann.items():
-            output_type_struct = annotation_to_type_struct(
-                output_type_annotation)
+            output_type_struct = annotation_to_type_struct(output_type_annotation)
             output_spec = OutputSpec(
                 name=output_name,
                 type=output_type_struct,
             )
             outputs.append(output_spec)
-    elif signature.return_annotation is not None and signature.return_annotation != inspect.Parameter.empty:
+    elif (
+        signature.return_annotation is not None
+        and signature.return_annotation != inspect.Parameter.empty
+    ):
         # Fixes exotic, but possible collision: `def func(output_path: OutputPath()) -> str: ...`
         output_name = _make_name_unique_by_adding_index(
-            single_output_name_const, output_names, '_')
+            single_output_name_const, output_names, "_"
+        )
         output_names.add(output_name)
         type_struct = annotation_to_type_struct(signature.return_annotation)
         output_spec = OutputSpec(
@@ -449,10 +484,13 @@ def _extract_component_interface(func: Callable) -> ComponentSpec:
     # Component name and description are derived from the function's name and docstring.
     # The name can be overridden by setting setting func.__name__ attribute (of the legacy func._component_human_name attribute).
     # The description can be overridden by setting the func.__doc__ attribute (or the legacy func._component_description attribute).
-    component_name = getattr(func, '_component_human_name',
-                             None) or _python_function_name_to_component_name(func.__name__)
-    description = getattr(func, '_component_description',
-                          None) or parsed_docstring.short_description
+    component_name = getattr(
+        func, "_component_human_name", None
+    ) or _python_function_name_to_component_name(func.__name__)
+    description = (
+        getattr(func, "_component_description", None)
+        or parsed_docstring.short_description
+    )
     if description:
         description = description.strip()
 
@@ -465,8 +503,15 @@ def _extract_component_interface(func: Callable) -> ComponentSpec:
     return component_spec
 
 
-def _func_to_component_spec(func, extra_code='', base_image: str = None, packages_to_install: List[str] = None, modules_to_capture: List[str] = None, use_code_pickling=False) -> ComponentSpec:
-    '''Takes a self-contained python function and converts it to component.
+def _func_to_component_spec(
+    func,
+    extra_code="",
+    base_image: str = None,
+    packages_to_install: List[str] = None,
+    modules_to_capture: List[str] = None,
+    use_code_pickling=False,
+) -> ComponentSpec:
+    """Takes a self-contained python function and converts it to component.
 
     Args:
         func: Required. The function to be converted
@@ -479,12 +524,15 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
 
     Returns:
         A :py:class:`kfp.components.structures.ComponentSpec` instance.
-    '''
-    decorator_base_image = getattr(func, '_component_base_image', None)
+    """
+    decorator_base_image = getattr(func, "_component_base_image", None)
     if decorator_base_image is not None:
         if base_image is not None and decorator_base_image != base_image:
             raise ValueError(
-                'base_image ({}) conflicts with the decorator-specified base image metadata ({})'.format(base_image, decorator_base_image))
+                "base_image ({}) conflicts with the decorator-specified base image metadata ({})".format(
+                    base_image, decorator_base_image
+                )
+            )
         else:
             base_image = decorator_base_image
     else:
@@ -501,14 +549,11 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
     component_outputs = component_spec.outputs or []
 
     arguments = []
-    arguments.extend(InputValuePlaceholder(input.name)
-                     for input in component_inputs)
-    arguments.extend(OutputPathPlaceholder(output.name)
-                     for output in component_outputs)
+    arguments.extend(InputValuePlaceholder(input.name) for input in component_inputs)
+    arguments.extend(OutputPathPlaceholder(output.name) for output in component_outputs)
 
     if use_code_pickling:
-        func_code = _capture_function_code_using_cloudpickle(
-            func, modules_to_capture)
+        func_code = _capture_function_code_using_cloudpickle(func, modules_to_capture)
         # pip startup is quite slow. TODO: Remove the special cloudpickle installation code in favor of the the following line once a way to speed up pip startup is discovered.
         # packages_to_install.append('cloudpickle==1.1.1')
     else:
@@ -523,7 +568,7 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
             if definition_str:
                 definitions.add(definition_str)
             return deserializer_code_str
-        return 'str'
+        return "str"
 
     pre_func_definitions = set()
 
@@ -533,7 +578,7 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
             return None
 
         if passing_style is InputPath:
-            return 'str'
+            return "str"
         elif passing_style is InputTextFile:
             return "argparse.FileType('rt')"
         elif passing_style is InputBinaryFile:
@@ -541,44 +586,53 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
         # For Output* we cannot use the build-in argparse.FileType objects since they do not create parent directories.
         elif passing_style is OutputPath:
             # ~= return 'str'
-            pre_func_definitions.add(inspect.getsource(
-                _make_parent_dirs_and_return_path))
+            pre_func_definitions.add(
+                inspect.getsource(_make_parent_dirs_and_return_path)
+            )
             return _make_parent_dirs_and_return_path.__name__
         elif passing_style is OutputTextFile:
             # ~= return "argparse.FileType('wt')"
-            pre_func_definitions.add(inspect.getsource(
-                _parent_dirs_maker_that_returns_open_file))
+            pre_func_definitions.add(
+                inspect.getsource(_parent_dirs_maker_that_returns_open_file)
+            )
             return _parent_dirs_maker_that_returns_open_file.__name__ + "('wt')"
         elif passing_style is OutputBinaryFile:
             # ~= return "argparse.FileType('wb')"
-            pre_func_definitions.add(inspect.getsource(
-                _parent_dirs_maker_that_returns_open_file))
+            pre_func_definitions.add(
+                inspect.getsource(_parent_dirs_maker_that_returns_open_file)
+            )
             return _parent_dirs_maker_that_returns_open_file.__name__ + "('wb')"
         raise NotImplementedError(
-            'Unexpected data passing style: "{}".'.format(str(passing_style)))
+            'Unexpected data passing style: "{}".'.format(str(passing_style))
+        )
 
     def get_serializer_and_register_definitions(type_name) -> str:
         serializer_func = get_serializer_func_for_type_struct(type_name)
         if serializer_func:
             # If serializer is not part of the standard python library, then include its code in the generated program
-            if hasattr(serializer_func, '__module__') and not _module_is_builtin_or_standard(serializer_func.__module__):
+            if hasattr(
+                serializer_func, "__module__"
+            ) and not _module_is_builtin_or_standard(serializer_func.__module__):
                 import inspect
+
                 serializer_code_str = inspect.getsource(serializer_func)
                 definitions.add(serializer_code_str)
             return serializer_func.__name__
-        return 'str'
+        return "str"
 
     arg_parse_code_lines = [
-        'import argparse',
-        '_parser = argparse.ArgumentParser(prog={prog_repr}, description={description_repr})'.format(
-            prog_repr=repr(component_spec.name or ''),
-            description_repr=repr(component_spec.description or ''),
+        "import argparse",
+        "_parser = argparse.ArgumentParser(prog={prog_repr}, description={description_repr})".format(
+            prog_repr=repr(component_spec.name or ""),
+            description_repr=repr(component_spec.description or ""),
         ),
     ]
     outputs_passed_through_func_return_tuple = [
-        output for output in component_outputs if output._passing_style is None]
+        output for output in component_outputs if output._passing_style is None
+    ]
     file_outputs_passed_using_func_parameters = [
-        output for output in component_outputs if output._passing_style is not None]
+        output for output in component_outputs if output._passing_style is not None
+    ]
     arguments = []
     for input in component_inputs + file_outputs_passed_using_func_parameters:
         param_flag = "--" + input.name.replace("_", "-")
@@ -587,21 +641,28 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
             param_flag=param_flag,
             # Not input.name, since the inputs could have been renamed
             param_var=input._parameter_name,
-            param_type=get_argparse_type_for_input_file(
-                input._passing_style) or get_deserializer_and_register_definitions(input.type),
+            param_type=get_argparse_type_for_input_file(input._passing_style)
+            or get_deserializer_and_register_definitions(input.type),
             is_required=str(is_required),
         )
         arg_parse_code_lines.append(line)
 
-        if input._passing_style in [InputPath, InputTextFile, InputBinaryFile, InputArtifact]:
-            arguments_for_input = [param_flag,
-                                   InputPathPlaceholder(input.name)]
-        elif input._passing_style in [OutputPath, OutputTextFile, OutputBinaryFile, OutputArtifact]:
-            arguments_for_input = [param_flag,
-                                   OutputPathPlaceholder(input.name)]
+        if input._passing_style in [
+            InputPath,
+            InputTextFile,
+            InputBinaryFile,
+            InputArtifact,
+        ]:
+            arguments_for_input = [param_flag, InputPathPlaceholder(input.name)]
+        elif input._passing_style in [
+            OutputPath,
+            OutputTextFile,
+            OutputBinaryFile,
+            OutputArtifact,
+        ]:
+            arguments_for_input = [param_flag, OutputPathPlaceholder(input.name)]
         else:
-            arguments_for_input = [param_flag,
-                                   InputValuePlaceholder(input.name)]
+            arguments_for_input = [param_flag, InputValuePlaceholder(input.name)]
 
         if is_required:
             arguments.extend(arguments_for_input)
@@ -625,21 +686,22 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
         )
         arg_parse_code_lines.append(line)
         arguments.append(param_flag)
-        arguments.extend(OutputPathPlaceholder(output.name)
-                         for output in outputs_passed_through_func_return_tuple)
+        arguments.extend(
+            OutputPathPlaceholder(output.name)
+            for output in outputs_passed_through_func_return_tuple
+        )
 
     output_serialization_expression_strings = []
     for output in outputs_passed_through_func_return_tuple:
-        serializer_call_str = get_serializer_and_register_definitions(
-            output.type)
+        serializer_call_str = get_serializer_and_register_definitions(output.type)
         output_serialization_expression_strings.append(serializer_call_str)
 
-    pre_func_code = '\n'.join(list(pre_func_definitions))
+    pre_func_code = "\n".join(list(pre_func_definitions))
 
     arg_parse_code_lines = list(definitions) + arg_parse_code_lines
 
     arg_parse_code_lines.append(
-        '_parsed_args = vars(_parser.parse_args())',
+        "_parsed_args = vars(_parser.parse_args())",
     )
     if outputs_passed_through_func_return_tuple:
         arg_parse_code_lines.append(
@@ -647,20 +709,21 @@ def _func_to_component_spec(func, extra_code='', base_image: str = None, package
         )
 
     # Putting singular return values in a list to be "zipped" with the serializers and output paths
-    outputs_to_list_code = ''
+    outputs_to_list_code = ""
     return_ann = inspect.signature(func).return_annotation
     if (  # The return type is singular, not sequence
         return_ann is not None
         and return_ann != inspect.Parameter.empty
         and not isinstance(return_ann, dict)
-        and not hasattr(return_ann, '_fields')  # namedtuple
+        and not hasattr(return_ann, "_fields")  # namedtuple
     ):
-        outputs_to_list_code = '_outputs = [_outputs]'
+        outputs_to_list_code = "_outputs = [_outputs]"
 
-    output_serialization_code = ''.join('    {},\n'.format(
-        s) for s in output_serialization_expression_strings)
+    output_serialization_code = "".join(
+        "    {},\n".format(s) for s in output_serialization_expression_strings
+    )
 
-    full_output_handling_code = '''
+    full_output_handling_code = """
 
 {outputs_to_list_code}
 
@@ -676,13 +739,12 @@ for idx, output_file in enumerate(_output_files):
         pass
     with open(output_file, 'w') as f:
         f.write(_output_serializers[idx](_outputs[idx]))
-'''.format(
+""".format(
         output_serialization_code=output_serialization_code,
         outputs_to_list_code=outputs_to_list_code,
     )
 
-    full_source = \
-        '''\
+    full_source = """\
 {pre_func_code}
 
 {extra_code}
@@ -692,41 +754,51 @@ for idx, output_file in enumerate(_output_files):
 {arg_parse_code}
 
 _outputs = {func_name}(**_parsed_args)
-'''.format(
-            func_name=func.__name__,
-            func_code=func_code,
-            pre_func_code=pre_func_code,
-            extra_code=extra_code,
-            arg_parse_code='\n'.join(arg_parse_code_lines),
-        )
+""".format(
+        func_name=func.__name__,
+        func_code=func_code,
+        pre_func_code=pre_func_code,
+        extra_code=extra_code,
+        arg_parse_code="\n".join(arg_parse_code_lines),
+    )
 
     if outputs_passed_through_func_return_tuple:
         full_source += full_output_handling_code
 
     # Removing consecutive blank lines
     import re
-    full_source = re.sub('\n\n\n+', '\n\n', full_source).strip('\n') + '\n'
+
+    full_source = re.sub("\n\n\n+", "\n\n", full_source).strip("\n") + "\n"
 
     package_preinstallation_command = []
     if packages_to_install:
-        package_install_command_line = 'PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location {}'.format(
-            ' '.join([repr(str(package)) for package in packages_to_install]))
+        package_install_command_line = "PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location {}".format(
+            " ".join([repr(str(package)) for package in packages_to_install])
+        )
         package_preinstallation_command = [
-            'sh', '-c', '({pip_install} || {pip_install} --user) && "$0" "$@"'.format(pip_install=package_install_command_line)]
+            "sh",
+            "-c",
+            '({pip_install} || {pip_install} --user) && "$0" "$@"'.format(
+                pip_install=package_install_command_line
+            ),
+        ]
 
     component_spec.implementation = ContainerImplementation(
         container=ContainerSpec(
             image=base_image,
-            command=package_preinstallation_command + [
-                'sh',
-                '-ec',
+            command=package_preinstallation_command
+            + [
+                "sh",
+                "-ec",
                 # Writing the program code to a file.
                 # This is needed for Python to show stack traces and for `inspect.getsource` to work (used by PyTorch JIT and this module for example).
-                textwrap.dedent('''\
+                textwrap.dedent(
+                    """\
                     program_path=$(mktemp)
                     printf "%s" "$0" > "$program_path"
                     python3 -u "$program_path" "$@"
-                '''),
+                """
+                ),
                 full_source,
             ],
             args=arguments,
@@ -736,7 +808,14 @@ _outputs = {func_name}(**_parsed_args)
     return component_spec
 
 
-def _func_to_component_dict(func, extra_code='', base_image: str = None, packages_to_install: List[str] = None, modules_to_capture: List[str] = None, use_code_pickling=False):
+def _func_to_component_dict(
+    func,
+    extra_code="",
+    base_image: str = None,
+    packages_to_install: List[str] = None,
+    modules_to_capture: List[str] = None,
+    use_code_pickling=False,
+):
     return _func_to_component_spec(
         func=func,
         extra_code=extra_code,
@@ -747,7 +826,14 @@ def _func_to_component_dict(func, extra_code='', base_image: str = None, package
     ).to_dict()
 
 
-def func_to_component_text(func, extra_code='', base_image: str = None, packages_to_install: List[str] = None, modules_to_capture: List[str] = None, use_code_pickling=False):
+def func_to_component_text(
+    func,
+    extra_code="",
+    base_image: str = None,
+    packages_to_install: List[str] = None,
+    modules_to_capture: List[str] = None,
+    use_code_pickling=False,
+):
     '''Converts a Python function to a component definition and returns its textual representation.
 
     Function docstring is used as component description. Argument and return annotations are used as component input/output types.
@@ -781,7 +867,15 @@ def func_to_component_text(func, extra_code='', base_image: str = None, packages
     return dump_yaml(component_dict)
 
 
-def func_to_component_file(func, output_component_file, base_image: str = None, extra_code='', packages_to_install: List[str] = None, modules_to_capture: List[str] = None, use_code_pickling=False) -> None:
+def func_to_component_file(
+    func,
+    output_component_file,
+    base_image: str = None,
+    extra_code="",
+    packages_to_install: List[str] = None,
+    modules_to_capture: List[str] = None,
+    use_code_pickling=False,
+) -> None:
     '''Converts a Python function to a component definition and writes it to a file.
 
     Function docstring is used as component description. Argument and return annotations are used as component input/output types.
@@ -819,7 +913,7 @@ def func_to_container_op(
     func: Callable,
     output_component_file: Optional[str] = None,
     base_image: Optional[str] = None,
-    extra_code: Optional[str] = '',
+    extra_code: Optional[str] = "",
     packages_to_install: List[str] = None,
     modules_to_capture: List[str] = None,
     use_code_pickling: bool = False,
@@ -866,7 +960,8 @@ def func_to_container_op(
         )
 
     output_component_file = output_component_file or getattr(
-        func, '_component_target_component_file', None)
+        func, "_component_target_component_file", None
+    )
     if output_component_file:
         component_spec.save(output_component_file)
         # TODO: assert ComponentSpec.from_dict(load_yaml(output_component_file)) == component_spec
@@ -992,11 +1087,15 @@ def create_component_from_func(
 
 def _module_is_builtin_or_standard(module_name: str) -> bool:
     import sys
+
     if module_name in sys.builtin_module_names:
         return True
     import distutils.sysconfig as sysconfig
     import os
+
     std_lib_dir = sysconfig.get_python_lib(standard_lib=True)
-    module_name_parts = module_name.split('.')
+    module_name_parts = module_name.split(".")
     expected_module_path = os.path.join(std_lib_dir, *module_name_parts)
-    return os.path.exists(expected_module_path) or os.path.exists(expected_module_path + '.py')
+    return os.path.exists(expected_module_path) or os.path.exists(
+        expected_module_path + ".py"
+    )

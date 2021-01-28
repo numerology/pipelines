@@ -22,14 +22,14 @@ from kfp.containers import _component_builder
 from kfp.containers import _container_builder
 from kfp import components
 
-_TEST_TARGET_IMAGE = 'gcr.io/my-project/my-image'
-_TEST_STAGING_LOCATION = 'gs://my-project/tmp'
+_TEST_TARGET_IMAGE = "gcr.io/my-project/my-image"
+_TEST_STAGING_LOCATION = "gs://my-project/tmp"
 
 
 def test_function(
     test_param: str,
-    test_artifact: components.InputArtifact('Dataset'),
-    test_output: components.OutputArtifact('Model')
+    test_artifact: components.InputArtifact("Dataset"),
+    test_output: components.OutputArtifact("Model"),
 ):
     pass
 
@@ -38,8 +38,12 @@ class ComponentBuilderTest(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp_dir = tempfile.mkdtemp()
         self._old_dir = os.getcwd()
-        with open(os.path.join(os.path.dirname(__file__), 'testdata',
-                               'expected_component.yaml'), 'r') as f:
+        with open(
+            os.path.join(
+                os.path.dirname(__file__), "testdata", "expected_component.yaml"
+            ),
+            "r",
+        ) as f:
             self._expected_component_yaml = f.read()
         os.chdir(self._tmp_dir)
         self.addCleanup(os.chdir, self._old_dir)
@@ -47,20 +51,20 @@ class ComponentBuilderTest(unittest.TestCase):
 
     @mock.patch.object(
         _container_builder.ContainerBuilder,
-        'build',
-        return_value='gcr.io/my-project/my-image:123456',
-        autospec=True
+        "build",
+        return_value="gcr.io/my-project/my-image:123456",
+        autospec=True,
     )
     def testBuildV2PythonComponent(self, mock_build):
         _component_builder.build_python_component(
             component_func=test_function,
             target_image=_TEST_TARGET_IMAGE,
             staging_gcs_path=_TEST_STAGING_LOCATION,
-            target_component_file='component.yaml',
-            is_v2=True
+            target_component_file="component.yaml",
+            is_v2=True,
         )
 
-        with open('component.yaml', 'r') as f:
+        with open("component.yaml", "r") as f:
             actual_component_yaml = f.read()
 
         self.assertEquals(actual_component_yaml, self._expected_component_yaml)
