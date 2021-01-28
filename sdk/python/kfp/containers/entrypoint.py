@@ -11,14 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import os
-from typing import Optional, Union
+from typing import Optional
+from typing import Union
 
 import fire
 from absl import logging
 from google.protobuf import json_format
-from kfp.containers import _gcs_helper, entrypoint_utils
+from kfp.containers import _gcs_helper
+from kfp.containers import entrypoint_utils
 from kfp.dsl import artifact
 
 FN_SOURCE = "ml/main.py"

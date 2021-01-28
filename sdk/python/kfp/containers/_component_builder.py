@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import logging
 import os
 import shutil
@@ -19,11 +18,16 @@ import sys
 import tempfile
 import warnings
 from collections import OrderedDict
-from typing import Callable, Dict, List, Optional
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
 
 from deprecated.sphinx import deprecated
-from kfp import components, dsl
-from kfp.components import _components, _structures
+from kfp import components
+from kfp import dsl
+from kfp.components import _components
+from kfp.components import _structures
 from kfp.containers import entrypoint
 
 from ..components._components import _create_task_factory_from_component_spec

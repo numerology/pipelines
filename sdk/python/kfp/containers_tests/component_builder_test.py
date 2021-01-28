@@ -19,7 +19,8 @@ import unittest
 
 import mock
 from kfp import components
-from kfp.containers import _component_builder, _container_builder
+from kfp.containers import _component_builder
+from kfp.containers import _container_builder
 
 _TEST_TARGET_IMAGE = "gcr.io/my-project/my-image"
 _TEST_STAGING_LOCATION = "gs://my-project/tmp"
