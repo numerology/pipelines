@@ -27,6 +27,7 @@ from ..components._components import _create_task_factory_from_component_spec
 from ..components._python_op import _func_to_component_spec
 from ._container_builder import ContainerBuilder
 from kfp import components
+from kfp import dsl
 from kfp.components import _components
 from kfp.components import _structures
 from kfp.containers import entrypoint
@@ -410,6 +411,8 @@ def build_python_component(
         program_args.append(
             _structures.OutputUriPlaceholder(
                 output_name=component_output.name))
+    program_args.append('--pipeline_context')
+    program_args.append(dsl.RUN_ID_PLACEHOLDER)
 
     component_spec.implementation.container.args = program_args
   else:
