@@ -25,7 +25,10 @@ _MAX_INIT_RETRY = 10
 class Metadata(object):
     """Helper class to handle interaction with metadata store."""
 
-    def __init__(self, connection_config: metadata_store_pb2.MetadataStoreClientConfig):
+    def __init__(
+            self,
+            connection_config: metadata_store_pb2.MetadataStoreClientConfig
+    ):
         for _ in range(_MAX_INIT_RETRY):
             try:
                 self._store = mlmd.MetadataStore(connection_config)

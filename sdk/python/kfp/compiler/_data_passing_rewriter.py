@@ -39,17 +39,20 @@ def fix_big_data_passing(workflow: dict) -> dict:
     workflow = copy.deepcopy(workflow)
 
     container_templates = [
-        template
-        for template in workflow["spec"]["templates"]
+        template for template in workflow["spec"]["templates"]
         if "container" in template
     ]
     dag_templates = [
-        template for template in workflow["spec"]["templates"] if "dag" in template
+        template for template in workflow["spec"]["templates"]
+        if "dag" in template
     ]
     resource_templates = [
-        template for template in workflow["spec"]["templates"] if "resource" in template
+        template for template in workflow["spec"]["templates"]
+        if "resource" in template
     ]  # TODO: Handle these
-    resource_template_names = set(template["name"] for template in resource_templates)
+    resource_template_names = set(
+        template["name"] for template in resource_templates
+    )
 
     # 1. Index the DAGs to understand how data is being passed and which inputs/outputs are connected to each other.
     # (task_template_name, task_input_name) -> Set[(dag_template_name, dag_input_name)]
@@ -70,7 +73,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
         }
         for task in dag_tasks:
             task_template_name = task["template"]
-            parameter_arguments = task.get("arguments", {}).get("parameters", {})
+            parameter_arguments = task.get("arguments",
+                                           {}).get("parameters", {})
             for parameter_argument in parameter_arguments:
                 task_input_name = parameter_argument["name"]
                 argument_value = parameter_argument["value"]
@@ -78,22 +82,21 @@ def fix_big_data_passing(workflow: dict) -> dict:
                 argument_placeholder_parts = deconstruct_single_placeholder(
                     argument_value
                 )
-                if (
-                    not argument_placeholder_parts
-                ):  # Argument is considered to be constant string
+                if (not argument_placeholder_parts
+                   ):  # Argument is considered to be constant string
                     template_input_to_parent_constant_arguments.setdefault(
                         (task_template_name, task_input_name), set()
                     ).add(argument_value)
 
                 placeholder_type = argument_placeholder_parts[0]
                 if placeholder_type not in (
-                    "inputs",
-                    "outputs",
-                    "tasks",
-                    "steps",
-                    "workflow",
-                    "pod",
-                    "item",
+                        "inputs",
+                        "outputs",
+                        "tasks",
+                        "steps",
+                        "workflow",
+                        "pod",
+                        "item",
                 ):
                     # Do not fail on Jinja or other double-curly-brace templates
                     continue
@@ -109,16 +112,13 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     assert argument_placeholder_parts[3] == "parameters"
                     upstream_output_name = argument_placeholder_parts[4]
                     upstream_template_name = task_name_to_template_name[
-                        upstream_task_name
-                    ]
+                        upstream_task_name]
                     template_input_to_parent_task_outputs.setdefault(
                         (task_template_name, task_input_name), set()
                     ).add((upstream_template_name, upstream_output_name))
-                elif (
-                    placeholder_type == "item"
-                    or placeholder_type == "workflow"
-                    or placeholder_type == "pod"
-                ):
+                elif (placeholder_type == "item" or
+                      placeholder_type == "workflow" or
+                      placeholder_type == "pod"):
                     # Treat loop variables as constant values
                     # workflow.parameters.* placeholders are not supported, but the DSL compiler does not produce those.
                     template_input_to_parent_constant_arguments.setdefault(
@@ -145,9 +145,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     output_value
                 )
                 placeholder_type = argument_placeholder_parts[0]
-                if (
-                    not argument_placeholder_parts
-                ):  # Argument is considered to be constant string
+                if (not argument_placeholder_parts
+                   ):  # Argument is considered to be constant string
                     raise RuntimeError(
                         "Constant DAG output values are not supported for now."
                     )
@@ -161,22 +160,21 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     assert argument_placeholder_parts[3] == "parameters"
                     upstream_output_name = argument_placeholder_parts[4]
                     upstream_template_name = task_name_to_template_name[
-                        upstream_task_name
-                    ]
+                        upstream_task_name]
                     dag_output_to_parent_template_outputs.setdefault(
                         (dag_template_name, dag_output_name), set()
                     ).add((upstream_template_name, upstream_output_name))
-                elif (
-                    placeholder_type == "item"
-                    or placeholder_type == "workflow"
-                    or placeholder_type == "pod"
-                ):
+                elif (placeholder_type == "item" or
+                      placeholder_type == "workflow" or
+                      placeholder_type == "pod"):
                     raise RuntimeError(
-                        'DAG output value "{}" is not supported.'.format(output_value)
+                        'DAG output value "{}" is not supported.'.
+                        format(output_value)
                     )
                 else:
                     raise AssertionError(
-                        'Unexpected placeholder type "{}".'.format(placeholder_type)
+                        'Unexpected placeholder type "{}".'.
+                        format(placeholder_type)
                     )
     # Finshed indexing the DAGs
 
@@ -194,7 +192,9 @@ def fix_big_data_passing(workflow: dict) -> dict:
             # The raw data must be a single input parameter reference. Otherwise (e.g. it's a string or a string with multiple inputs) we should not do the conversion to artifact passing.
             input_name = extract_input_parameter_name(raw_data)
             if input_name:
-                inputs_directly_consumed_as_artifacts.add((template_name, input_name))
+                inputs_directly_consumed_as_artifacts.add(
+                    (template_name, input_name)
+                )
                 # Deleting the "default value based" data passing hack so that it's replaced by the "argument based" way of data passing.
                 del input_artifact["raw"]
                 # The input artifact name should be the same as the original input parameter name
@@ -217,13 +217,13 @@ def fix_big_data_passing(workflow: dict) -> dict:
                 parts = placeholder.split(".")
                 placeholder_type = parts[0]
                 if placeholder_type not in (
-                    "inputs",
-                    "outputs",
-                    "tasks",
-                    "steps",
-                    "workflow",
-                    "pod",
-                    "item",
+                        "inputs",
+                        "outputs",
+                        "tasks",
+                        "steps",
+                        "workflow",
+                        "pod",
+                        "item",
                 ):
                     # Do not fail on Jinja or other double-curly-brace templates
                     continue
@@ -241,8 +241,7 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     assert parts[3] == "parameters"
                     upstream_output_name = parts[4]
                     upstream_template_name = task_name_to_template_name[
-                        upstream_task_name
-                    ]
+                        upstream_task_name]
                     outputs_directly_consumed_as_parameters.add(
                         (upstream_template_name, upstream_output_name)
                     )
@@ -254,7 +253,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     )
                 else:
                     raise AssertionError(
-                        'Unexpected placeholder type "{}".'.format(placeholder_type)
+                        'Unexpected placeholder type "{}".'.
+                        format(placeholder_type)
                     )
 
     # Searching for parameter input consumers in container and resource templates
@@ -265,13 +265,13 @@ def fix_big_data_passing(workflow: dict) -> dict:
             parts = placeholder.split(".")
             placeholder_type = parts[0]
             if placeholder_type not in (
-                "inputs",
-                "outputs",
-                "tasks",
-                "steps",
-                "workflow",
-                "pod",
-                "item",
+                    "inputs",
+                    "outputs",
+                    "tasks",
+                    "steps",
+                    "workflow",
+                    "pod",
+                    "item",
             ):
                 # Do not fail on Jinja or other double-curly-brace templates
                 continue
@@ -286,21 +286,18 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     )
                 elif parts[1] == "artifacts":
                     raise AssertionError(
-                        "Found unexpected Argo input artifact placeholder in container template: {}".format(
-                            placeholder
-                        )
+                        "Found unexpected Argo input artifact placeholder in container template: {}"
+                        .format(placeholder)
                     )
                 else:
                     raise AssertionError(
-                        "Found unexpected Argo input placeholder in container template: {}".format(
-                            placeholder
-                        )
+                        "Found unexpected Argo input placeholder in container template: {}"
+                        .format(placeholder)
                     )
             else:
                 raise AssertionError(
-                    "Found unexpected Argo placeholder in container template: {}".format(
-                        placeholder
-                    )
+                    "Found unexpected Argo placeholder in container template: {}"
+                    .format(placeholder)
                 )
 
     # Finished indexing data consumers
@@ -312,21 +309,33 @@ def fix_big_data_passing(workflow: dict) -> dict:
     outputs_consumed_as_parameters = set()
     outputs_consumed_as_artifacts = set()
 
-    def mark_upstream_ios_of_input(template_input, marked_inputs, marked_outputs):
+    def mark_upstream_ios_of_input(
+            template_input, marked_inputs, marked_outputs
+    ):
         # Stopping if the input has already been visited to save time and handle recursive calls
         if template_input in marked_inputs:
             return
         marked_inputs.add(template_input)
 
-        upstream_inputs = template_input_to_parent_dag_inputs.get(template_input, [])
+        upstream_inputs = template_input_to_parent_dag_inputs.get(
+            template_input, []
+        )
         for upstream_input in upstream_inputs:
-            mark_upstream_ios_of_input(upstream_input, marked_inputs, marked_outputs)
+            mark_upstream_ios_of_input(
+                upstream_input, marked_inputs, marked_outputs
+            )
 
-        upstream_outputs = template_input_to_parent_task_outputs.get(template_input, [])
+        upstream_outputs = template_input_to_parent_task_outputs.get(
+            template_input, []
+        )
         for upstream_output in upstream_outputs:
-            mark_upstream_ios_of_output(upstream_output, marked_inputs, marked_outputs)
+            mark_upstream_ios_of_output(
+                upstream_output, marked_inputs, marked_outputs
+            )
 
-    def mark_upstream_ios_of_output(template_output, marked_inputs, marked_outputs):
+    def mark_upstream_ios_of_output(
+            template_output, marked_inputs, marked_outputs
+    ):
         # Stopping if the output has already been visited to save time and handle recursive calls
         if template_output in marked_outputs:
             return
@@ -336,7 +345,9 @@ def fix_big_data_passing(workflow: dict) -> dict:
             template_output, []
         )
         for upstream_output in upstream_outputs:
-            mark_upstream_ios_of_output(upstream_output, marked_inputs, marked_outputs)
+            mark_upstream_ios_of_output(
+                upstream_output, marked_inputs, marked_outputs
+            )
 
     for input in inputs_directly_consumed_as_parameters:
         mark_upstream_ios_of_input(
@@ -348,7 +359,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
         )
     for output in outputs_directly_consumed_as_parameters:
         mark_upstream_ios_of_output(
-            output, inputs_consumed_as_parameters, outputs_consumed_as_parameters
+            output, inputs_consumed_as_parameters,
+            outputs_consumed_as_parameters
         )
 
     # 4. Convert the inputs, outputs and arguments based on how they're consumed downstream.
@@ -364,30 +376,29 @@ def fix_big_data_passing(workflow: dict) -> dict:
         for input_parameter in input_parameters:
             input_name = input_parameter["name"]
             if (template["name"], input_name) in inputs_consumed_as_artifacts:
-                input_artifacts.append(
-                    {
-                        "name": input_name,
-                    }
-                )
+                input_artifacts.append({
+                    "name": input_name,
+                })
 
         # Converting DAG outputs
         outputs = template.get("outputs", {})
         output_parameters = outputs.get("parameters", [])
-        output_artifacts = outputs.setdefault("artifacts", [])  # Should be empty
+        output_artifacts = outputs.setdefault(
+            "artifacts", []
+        )  # Should be empty
         for output_parameter in output_parameters:
             output_name = output_parameter["name"]
             if (template["name"], output_name) in outputs_consumed_as_artifacts:
-                parameter_reference_placeholder = output_parameter["valueFrom"][
-                    "parameter"
-                ]
-                output_artifacts.append(
-                    {
-                        "name": output_name,
-                        "from": parameter_reference_placeholder.replace(
-                            ".parameters.", ".artifacts."
-                        ),
-                    }
-                )
+                parameter_reference_placeholder = output_parameter["valueFrom"
+                                                                  ]["parameter"]
+                output_artifacts.append({
+                    "name":
+                    output_name,
+                    "from":
+                    parameter_reference_placeholder.replace(
+                        ".parameters.", ".artifacts."
+                    ),
+                })
 
         # Converting DAG task arguments
         tasks = template.get("dag", {}).get("tasks", [])
@@ -397,7 +408,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
             artifact_arguments = task_arguments.setdefault("artifacts", [])
             for parameter_argument in parameter_arguments:
                 input_name = parameter_argument["name"]
-                if (task["template"], input_name) in inputs_consumed_as_artifacts:
+                if (task["template"],
+                        input_name) in inputs_consumed_as_artifacts:
                     # argument parameters always use "value"; output parameters always use "valueFrom" (container/DAG/etc)
                     argument_value = parameter_argument["value"]
                     argument_placeholder_parts = deconstruct_single_placeholder(
@@ -406,40 +418,35 @@ def fix_big_data_passing(workflow: dict) -> dict:
                     # If the argument is consumed as artifact downstream:
                     # Pass DAG inputs and DAG/container task outputs as usual;
                     # Everything else (constant strings, loop variables, resource task outputs) is passed as raw artifact data. Argo properly replaces placeholders in it.
-                    if (
-                        argument_placeholder_parts
-                        and argument_placeholder_parts[0] in ["inputs", "tasks"]
-                        and not (
-                            argument_placeholder_parts[0] == "tasks"
-                            and argument_placeholder_parts[1] in resource_template_names
-                        )
-                    ):
-                        artifact_arguments.append(
-                            {
-                                "name": input_name,
-                                "from": argument_value.replace(
-                                    ".parameters.", ".artifacts."
-                                ),
-                            }
-                        )
+                    if (argument_placeholder_parts and
+                            argument_placeholder_parts[0] in ["inputs", "tasks"
+                                                             ] and
+                            not (argument_placeholder_parts[0] == "tasks" and
+                                 argument_placeholder_parts[1] in
+                                 resource_template_names)):
+                        artifact_arguments.append({
+                            "name":
+                            input_name,
+                            "from":
+                            argument_value.replace(
+                                ".parameters.", ".artifacts."
+                            ),
+                        })
                     else:
-                        artifact_arguments.append(
-                            {
-                                "name": input_name,
-                                "raw": {
-                                    "data": argument_value,
-                                },
-                            }
-                        )
+                        artifact_arguments.append({
+                            "name": input_name,
+                            "raw": {
+                                "data": argument_value,
+                            },
+                        })
 
     # Remove input parameters unless they're used downstream. This also removes unused container template inputs if any.
     for template in container_templates + dag_templates:
         inputs = template.get("inputs", {})
         inputs["parameters"] = [
-            input_parameter
-            for input_parameter in inputs.get("parameters", [])
-            if (template["name"], input_parameter["name"])
-            in inputs_consumed_as_parameters
+            input_parameter for input_parameter in inputs.get("parameters", [])
+            if (template["name"],
+                input_parameter["name"]) in inputs_consumed_as_parameters
         ]
 
     # Remove output parameters unless they're used downstream
@@ -448,8 +455,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
         outputs["parameters"] = [
             output_parameter
             for output_parameter in outputs.get("parameters", [])
-            if (template["name"], output_parameter["name"])
-            in outputs_consumed_as_parameters
+            if (template["name"],
+                output_parameter["name"]) in outputs_consumed_as_parameters
         ]
 
     # Remove DAG parameter arguments unless they're used downstream
@@ -460,8 +467,8 @@ def fix_big_data_passing(workflow: dict) -> dict:
             task_arguments["parameters"] = [
                 parameter_argument
                 for parameter_argument in task_arguments.get("parameters", [])
-                if (task["template"], parameter_argument["name"])
-                in inputs_consumed_as_parameters
+                if (task["template"],
+                    parameter_argument["name"]) in inputs_consumed_as_parameters
             ]
 
     # Fix Workflow parameter arguments that are consumed as artifacts downstream
@@ -470,18 +477,19 @@ def fix_big_data_passing(workflow: dict) -> dict:
     entrypoint_template_name = workflow_spec["entrypoint"]
     workflow_arguments = workflow_spec["arguments"]
     parameter_arguments = workflow_arguments.get("parameters", [])
-    artifact_arguments = workflow_arguments.get("artifacts", [])  # Should be empty
+    artifact_arguments = workflow_arguments.get(
+        "artifacts", []
+    )  # Should be empty
     for parameter_argument in parameter_arguments:
         input_name = parameter_argument["name"]
-        if (entrypoint_template_name, input_name) in inputs_consumed_as_artifacts:
-            artifact_arguments.append(
-                {
-                    "name": input_name,
-                    "raw": {
-                        "data": "{{workflow.parameters." + input_name + "}}",
-                    },
-                }
-            )
+        if (entrypoint_template_name,
+                input_name) in inputs_consumed_as_artifacts:
+            artifact_arguments.append({
+                "name": input_name,
+                "raw": {
+                    "data": "{{workflow.parameters." + input_name + "}}",
+                },
+            })
     if artifact_arguments:
         workflow_arguments["artifacts"] = artifact_arguments
 
@@ -538,7 +546,7 @@ def deconstruct_single_placeholder(s: str) -> List[str]:
 
 
 def _replace_output_dir_and_run_id(
-    command_line: str, output_directory: Optional[str] = None
+        command_line: str, output_directory: Optional[str] = None
 ) -> str:
     """Replaces the output directory placeholder."""
     if _components.OUTPUT_DIR_PLACEHOLDER in command_line:
@@ -558,7 +566,7 @@ def _replace_output_dir_and_run_id(
 
 
 def _refactor_outputs_if_uri_placeholder(
-    container_template: Dict[str, Any], output_to_filename: Dict[str, str]
+        container_template: Dict[str, Any], output_to_filename: Dict[str, str]
 ) -> None:
     """Rewrites the output of the container in case of URI placeholder.
 
@@ -572,9 +580,8 @@ def _refactor_outputs_if_uri_placeholder(
     """
 
     # If there's no artifact outputs then no refactor is needed.
-    if not container_template.get("outputs") or not container_template["outputs"].get(
-        "artifacts"
-    ):
+    if not container_template.get(
+            "outputs") or not container_template["outputs"].get("artifacts"):
         return
 
     parameter_outputs = container_template["outputs"].get("parameters") or []
@@ -584,17 +591,16 @@ def _refactor_outputs_if_uri_placeholder(
         # on its path.
         if _components.OUTPUT_DIR_PLACEHOLDER in artifact_output["path"]:
             # If so, we'll add a parameter output to output the pod name
-            parameter_outputs.append(
-                {
-                    "name": _components.PRODUCER_POD_NAME_PARAMETER.format(
-                        artifact_output["name"]
-                    ),
-                    "value": "{{pod.name}}",
-                }
-            )
-            output_to_filename[artifact_output["name"]] = os.path.basename(
-                artifact_output["path"]
-            )
+            parameter_outputs.append({
+                "name":
+                _components.PRODUCER_POD_NAME_PARAMETER.format(
+                    artifact_output["name"]
+                ),
+                "value":
+                "{{pod.name}}",
+            })
+            output_to_filename[artifact_output["name"]
+                              ] = os.path.basename(artifact_output["path"])
         else:
             # Otherwise, this artifact output is preserved.
             new_artifact_outputs.append(artifact_output)
@@ -604,9 +610,9 @@ def _refactor_outputs_if_uri_placeholder(
 
 
 def _refactor_inputs_if_uri_placeholder(
-    container_template: Dict[str, Any],
-    output_to_filename: Dict[str, str],
-    refactored_inputs: Dict[Tuple[str, str], str],
+        container_template: Dict[str, Any],
+        output_to_filename: Dict[str, str],
+        refactored_inputs: Dict[Tuple[str, str], str],
 ) -> None:
     """Rewrites the input of the container in case of URI placeholder.
 
@@ -622,15 +628,14 @@ def _refactor_inputs_if_uri_placeholder(
             refactored from (template name, previous name) to its new name.
     """
     is_v2 = bool(
-        container_template.get("metadata", {})
-        .get("annotations", {})
-        .get(_component_builder.V2_COMPONENT_ANNOTATION)
+        container_template.get("metadata", {}).get("annotations", {}).get(
+            _component_builder.V2_COMPONENT_ANNOTATION
+        )
     )
 
     # If there's no artifact inputs then no refactor is needed.
-    if not container_template.get("inputs") or not container_template["inputs"].get(
-        "artifacts"
-    ):
+    if not container_template.get(
+            "inputs") or not container_template["inputs"].get("artifacts"):
         return
 
     parameter_inputs = container_template["inputs"].get("parameters") or []
@@ -654,22 +659,21 @@ def _refactor_inputs_if_uri_placeholder(
             # Here we're using the template name + previous artifact input name
             # as key, because it will be refactored later at the DAG level.
             refactored_inputs[
-                (container_template["name"], artifact_input["name"])
-            ] = input_name
+                (container_template["name"],
+                 artifact_input["name"])] = input_name
 
             # In the container implementation, the pod name is already connected
             # to the input parameter per the implementation in _components.
             # The only thing yet to be reconciled is the file name.
 
             def reconcile_output_name(
-                command_lines: List[str], is_v2: bool = False
+                    command_lines: List[str], is_v2: bool = False
             ) -> List[str]:
                 new_command_lines = []
                 for cmd in command_lines:
                     matched_uri_pattern = re.match(
-                        r".*/{{kfp\.run_uid}}/{{inputs\.parameters\."
-                        + input_name
-                        + r"}}/(?P<filename>.*)",
+                        r".*/{{kfp\.run_uid}}/{{inputs\.parameters\." +
+                        input_name + r"}}/(?P<filename>.*)",
                         cmd,
                     )
                     matched_output_name_pattern = re.match(
@@ -677,8 +681,8 @@ def _refactor_inputs_if_uri_placeholder(
                     )
                     if matched_uri_pattern:
                         new_command_lines.append(
-                            cmd[: -len(matched_uri_pattern.group("filename"))]
-                            + output_to_filename[artifact_input["name"]]
+                            cmd[:-len(matched_uri_pattern.group("filename"))] +
+                            output_to_filename[artifact_input["name"]]
                         )
                     elif matched_output_name_pattern and is_v2:
                         # If this is a v2 component, we need to replace the
@@ -696,9 +700,10 @@ def _refactor_inputs_if_uri_placeholder(
                     container_template["container"]["args"], is_v2
                 )
             if container_template["container"].get("command"):
-                container_template["container"]["command"] = reconcile_output_name(
-                    container_template["container"]["command"], is_v2
-                )
+                container_template["container"][
+                    "command"] = reconcile_output_name(
+                        container_template["container"]["command"], is_v2
+                    )
         else:
             new_artifact_inputs.append(artifact_input)
 
@@ -707,7 +712,8 @@ def _refactor_inputs_if_uri_placeholder(
 
 
 def _refactor_dag_inputs(
-    dag_template: Dict[str, Any], refactored_inputs: Dict[Tuple[str, str], str]
+        dag_template: Dict[str, Any],
+        refactored_inputs: Dict[Tuple[str, str], str]
 ) -> None:
     """Refactors the inputs of the DAG template.
 
@@ -732,12 +738,12 @@ def _refactor_dag_inputs(
     new_artifact_inputs = []
     for input_artifact in dag_template["inputs"]["artifacts"]:
         if input_artifact["name"] in artifact_to_new_name:
-            parameter_inputs.append(
-                {"name": artifact_to_new_name[input_artifact["name"]]}
-            )
-            refactored_inputs[
-                (dag_template["name"], input_artifact["name"])
-            ] = artifact_to_new_name[input_artifact["name"]]
+            parameter_inputs.append({
+                "name":
+                artifact_to_new_name[input_artifact["name"]]
+            })
+            refactored_inputs[(dag_template["name"], input_artifact["name"])
+                             ] = artifact_to_new_name[input_artifact["name"]]
         else:
             new_artifact_inputs.append(input_artifact)
     dag_template["inputs"]["artifacts"] = new_artifact_inputs
@@ -745,7 +751,8 @@ def _refactor_dag_inputs(
 
 
 def _refactor_dag_template_uri_inputs(
-    dag_template: Dict[str, Any], refactored_inputs: Dict[Tuple[str, str], str]
+        dag_template: Dict[str, Any],
+        refactored_inputs: Dict[Tuple[str, str], str]
 ) -> None:
     """Refactors artifact inputs within the DAG template.
 
@@ -774,8 +781,7 @@ def _refactor_dag_template_uri_inputs(
                 # It will be changed to an input parameter receiving the
                 # producer's pod name.
                 pod_parameter_name = refactored_inputs[
-                    (template_name, artifact_arg["name"])
-                ]
+                    (template_name, artifact_arg["name"])]
 
                 # There are two cases for a DAG template.
                 assert artifact_arg.get("from", "").startswith(
@@ -796,18 +802,17 @@ def _refactor_dag_template_uri_inputs(
                         task_matches.group("task_name"),
                         task_matches.group("output_name"),
                     )
-                    parameter_args.append(
-                        {
-                            "name": pod_parameter_name,
-                            "value": "{{{{tasks.{task_name}.outputs."
-                            "parameters.{output}}}}}".format(
-                                task_name=task_name,
-                                output=_components.PRODUCER_POD_NAME_PARAMETER.format(
-                                    output_name
-                                ),
-                            ),
-                        }
-                    )
+                    parameter_args.append({
+                        "name":
+                        pod_parameter_name,
+                        "value":
+                        "{{{{tasks.{task_name}.outputs."
+                        "parameters.{output}}}}}".format(
+                            task_name=task_name,
+                            output=_components.PRODUCER_POD_NAME_PARAMETER.
+                            format(output_name),
+                        ),
+                    })
                 else:
                     # 2. The assert above ensures that the argument to refactor
                     # is from an input of the current DAG template.
@@ -821,17 +826,17 @@ def _refactor_dag_template_uri_inputs(
                         "get parameter instead: %s" % arg_from
                     )
                     # Get the corresponding refactored name of this DAG template
-                    new_input = refactored_inputs[
-                        (dag_template["name"], input_matches.group("input_name"))
-                    ]
-                    parameter_args.append(
-                        {
-                            "name": pod_parameter_name,
-                            "value": "{{{{inputs.parameters.{new_input}}}}}".format(
-                                new_input=new_input,
-                            ),
-                        }
-                    )
+                    new_input = refactored_inputs[(
+                        dag_template["name"], input_matches.group("input_name")
+                    )]
+                    parameter_args.append({
+                        "name":
+                        pod_parameter_name,
+                        "value":
+                        "{{{{inputs.parameters.{new_input}}}}}".format(
+                            new_input=new_input,
+                        ),
+                    })
             else:
                 # Otherwise this artifact input will be preserved
                 new_artifact_args.append(artifact_arg)
@@ -841,7 +846,7 @@ def _refactor_dag_template_uri_inputs(
 
 
 def add_pod_name_passing(
-    workflow: Dict[str, Any], output_directory: Optional[str] = None
+        workflow: Dict[str, Any], output_directory: Optional[str] = None
 ) -> Dict[str, Any]:
     """Refactors the workflow structure to pass pod names when needded.
 
@@ -860,14 +865,14 @@ def add_pod_name_passing(
 
     # Sets of templates representing a container task.
     container_templates = [
-        template
-        for template in workflow["spec"]["templates"]
+        template for template in workflow["spec"]["templates"]
         if "container" in template
     ]
 
     # Sets of templates representing a (sub)DAG.
     dag_templates = [
-        template for template in workflow["spec"]["templates"] if "dag" in template
+        template for template in workflow["spec"]["templates"]
+        if "dag" in template
     ]
 
     # 1. If there's an output using outputUri placeholder, then this container
@@ -906,14 +911,16 @@ def add_pod_name_passing(
         args = template["container"].get("args") or []
         if args:
             new_args = [
-                _replace_output_dir_and_run_id(arg, output_directory) for arg in args
+                _replace_output_dir_and_run_id(arg, output_directory)
+                for arg in args
             ]
             template["container"]["args"] = new_args
 
         cmds = template["container"].get("command") or []
         if cmds:
             new_cmds = [
-                _replace_output_dir_and_run_id(cmd, output_directory) for cmd in cmds
+                _replace_output_dir_and_run_id(cmd, output_directory)
+                for cmd in cmds
             ]
             template["container"]["command"] = new_cmds
 

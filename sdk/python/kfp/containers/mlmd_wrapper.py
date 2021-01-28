@@ -23,7 +23,8 @@ MLMD_HOST_ENV = "METADATA_GRPC_SERVICE_HOST"
 MLMD_PORT_ENV = "METADATA_GRPC_SERVICE_PORT"
 
 
-def _get_metadata_connection_config() -> metadata_store_pb2.MetadataStoreClientConfig:
+def _get_metadata_connection_config(
+) -> metadata_store_pb2.MetadataStoreClientConfig:
     """Constructs the metadata grpc connection config.
 
     Returns:

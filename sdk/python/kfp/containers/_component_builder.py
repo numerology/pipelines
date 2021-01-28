@@ -137,11 +137,11 @@ def _dependency_to_requirements(dependency=[], filename="requirements.txt"):
 
 
 def _generate_dockerfile(
-    filename: str,
-    base_image: str,
-    python_version: str,
-    requirement_filename: Optional[str] = None,
-    add_files: Optional[Dict[str, str]] = None,
+        filename: str,
+        base_image: str,
+        python_version: str,
+        requirement_filename: Optional[str] = None,
+        add_files: Optional[Dict[str, str]] = None,
 ):
     """
     generates dockerfiles
@@ -189,14 +189,16 @@ def _configure_logger(logger):
     info_handler.addFilter(lambda record: record.levelno <= logging.INFO)
     info_handler.setFormatter(
         logging.Formatter(
-            "%(asctime)s:%(levelname)s:%(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+            "%(asctime)s:%(levelname)s:%(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
         )
     )
     error_handler = logging.StreamHandler(sys.stderr)
     error_handler.addFilter(lambda record: record.levelno > logging.INFO)
     error_handler.setFormatter(
         logging.Formatter(
-            "%(asctime)s:%(levelname)s:%(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+            "%(asctime)s:%(levelname)s:%(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S"
         )
     )
     logger.addHandler(info_handler)
@@ -204,7 +206,7 @@ def _configure_logger(logger):
 
 
 def _purge_program_launching_code(
-    commands: List[str], python_version: str, entrypoint_container_path: str
+        commands: List[str], python_version: str, entrypoint_container_path: str
 ) -> str:
     """Replaces the inline Python code with calling a local program.
 
@@ -235,16 +237,16 @@ def _purge_program_launching_code(
 
 
 def build_python_component(
-    component_func: Callable,
-    target_image: str,
-    base_image: Optional[str] = None,
-    dependency: Optional[List[VersionedDependency]] = None,
-    staging_gcs_path: Optional[str] = None,
-    timeout: int = 600,
-    namespace: Optional[str] = None,
-    target_component_file: Optional[str] = None,
-    python_version: str = "python3",
-    is_v2: bool = False,
+        component_func: Callable,
+        target_image: str,
+        base_image: Optional[str] = None,
+        dependency: Optional[List[VersionedDependency]] = None,
+        staging_gcs_path: Optional[str] = None,
+        timeout: int = 600,
+        namespace: Optional[str] = None,
+        target_component_file: Optional[str] = None,
+        python_version: str = "python3",
+        is_v2: bool = False,
 ):
     """build_component automatically builds a container image for the
     component_func based on the base_image and pushes to the target_image.
@@ -302,13 +304,13 @@ def build_python_component(
         dependency = []
 
     logging.info(
-        "Build an image that is based on "
-        + base_image
-        + " and push the image to "
-        + target_image
+        "Build an image that is based on " + base_image +
+        " and push the image to " + target_image
     )
 
-    component_spec = _func_to_component_spec(component_func, base_image=base_image)
+    component_spec = _func_to_component_spec(
+        component_func, base_image=base_image
+    )
 
     if is_v2:
         # Annotate the component to be a V2 one.
@@ -351,17 +353,22 @@ def build_python_component(
                 #    artifact, by which the artifact can be found in the producer
                 #    metadata JSON file.
                 program_args.append(
-                    "--{}{}".format(component_input.name, entrypoint.INPUT_PATH_SUFFIX)
+                    "--{}{}".format(
+                        component_input.name, entrypoint.INPUT_PATH_SUFFIX
+                    )
                 )
                 program_args.append(
-                    _structures.InputUriPlaceholder(input_name=component_input.name)
+                    _structures.InputUriPlaceholder(
+                        input_name=component_input.name
+                    )
                 )
-                program_args.append("--{}{}".format(component_input.name, "_pod_name"))
+                program_args.append(
+                    "--{}{}".format(component_input.name, "_pod_name")
+                )
                 program_args.append(
                     "{{{{inputs.parameters.{input}}}}}".format(
-                        input=_components.PRODUCER_POD_NAME_PARAMETER.format(
-                            component_input.name
-                        )
+                        input=_components.PRODUCER_POD_NAME_PARAMETER.
+                        format(component_input.name)
                     )
                 )
                 # program_args.append('--{}{}'.format(
@@ -375,7 +382,9 @@ def build_python_component(
                 # placeholder by letting v2 component output two metadata files per
                 # output.
                 program_args.append(
-                    "--{}{}".format(component_input.name, entrypoint.OUTPUT_NAME_SUFFIX)
+                    "--{}{}".format(
+                        component_input.name, entrypoint.OUTPUT_NAME_SUFFIX
+                    )
                 )
                 program_args.append(
                     _structures.InputOutputPortNamePlaceholder(
@@ -408,7 +417,9 @@ def build_python_component(
                 # placeholder by letting v2 component output two metadata files per
                 # output.
                 program_args.append(
-                    "--{}{}".format(component_input.name, entrypoint.FIELD_NAME_SUFFIX)
+                    "--{}{}".format(
+                        component_input.name, entrypoint.FIELD_NAME_SUFFIX
+                    )
                 )
                 program_args.append(
                     _structures.InputOutputPortNamePlaceholder(
@@ -416,10 +427,14 @@ def build_python_component(
                     )
                 )
                 program_args.append(
-                    "--{}{}".format(component_input.name, entrypoint.ARGO_PARAM_SUFFIX)
+                    "--{}{}".format(
+                        component_input.name, entrypoint.ARGO_PARAM_SUFFIX
+                    )
                 )
                 program_args.append(
-                    _structures.InputValuePlaceholder(input_name=component_input.name)
+                    _structures.InputValuePlaceholder(
+                        input_name=component_input.name
+                    )
                 )
             else:
                 raise TypeError(
@@ -435,11 +450,14 @@ def build_python_component(
                 #    input artifact.
                 program_args.append(
                     "--{}{}".format(
-                        component_output.name, entrypoint.OUTPUT_ARTIFACT_PATH_SUFFIX
+                        component_output.name,
+                        entrypoint.OUTPUT_ARTIFACT_PATH_SUFFIX
                     )
                 )
                 program_args.append(
-                    _structures.OutputUriPlaceholder(output_name=component_output.name)
+                    _structures.OutputUriPlaceholder(
+                        output_name=component_output.name
+                    )
                 )
         program_args.append("--pipeline_context")
         program_args.append(dsl.RUN_ID_PLACEHOLDER)
@@ -483,7 +501,9 @@ def build_python_component(
         _dependency_to_requirements(dependency, local_requirement_filepath)
 
         # Generate Dockerfile in the context directory
-        local_docker_filepath = os.path.join(local_build_dir, arc_docker_filename)
+        local_docker_filepath = os.path.join(
+            local_build_dir, arc_docker_filename
+        )
         add_files = {program_path: "/" + program_path}
         if is_v2:
             add_files[v2_entrypoint_path] = "/" + v2_entrypoint_path
@@ -511,16 +531,23 @@ def build_python_component(
     if target_component_file:
         component_spec.save(target_component_file)
 
-    task_factory_function = _create_task_factory_from_component_spec(component_spec)
+    task_factory_function = _create_task_factory_from_component_spec(
+        component_spec
+    )
     return task_factory_function
 
 
 @deprecated(
     version="0.1.32",
-    reason="`build_docker_image` is deprecated. Use `kfp.containers.build_image_from_working_dir` instead.",
+    reason=
+    "`build_docker_image` is deprecated. Use `kfp.containers.build_image_from_working_dir` instead.",
 )
 def build_docker_image(
-    staging_gcs_path, target_image, dockerfile_path, timeout=600, namespace=None
+        staging_gcs_path,
+        target_image,
+        dockerfile_path,
+        timeout=600,
+        namespace=None
 ):
     """build_docker_image automatically builds a container image based on the specification in the dockerfile and
     pushes to the target_image.

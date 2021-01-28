@@ -27,22 +27,22 @@ _TEST_STAGING_LOCATION = "gs://my-project/tmp"
 
 
 def test_function(
-    test_param: str,
-    test_artifact: components.InputArtifact("Dataset"),
-    test_output: components.OutputArtifact("Model"),
+        test_param: str,
+        test_artifact: components.InputArtifact("Dataset"),
+        test_output: components.OutputArtifact("Model"),
 ):
     pass
 
 
 class ComponentBuilderTest(unittest.TestCase):
+
     def setUp(self) -> None:
         self._tmp_dir = tempfile.mkdtemp()
         self._old_dir = os.getcwd()
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "testdata", "expected_component.yaml"
-            ),
-            "r",
+                os.path.join(os.path.dirname(__file__), "testdata",
+                             "expected_component.yaml"),
+                "r",
         ) as f:
             self._expected_component_yaml = f.read()
         os.chdir(self._tmp_dir)
