@@ -27,25 +27,23 @@ __all__ = [
     "OutputBinaryFile",
 ]
 
-from ._yaml_utils import dump_yaml
-from ._components import _create_task_factory_from_component_spec
-from ._data_passing import (
-    serialize_value,
-    get_deserializer_code_for_type_struct,
-    get_serializer_func_for_type_struct,
-    get_canonical_type_struct_for_type,
-)
-from ._naming import _make_name_unique_by_adding_index
-from .structures import *
-from . import _structures as structures
-
 import inspect
-from pathlib import Path
 import textwrap
-from typing import Callable, List, Mapping, Optional, TypeVar
 import warnings
+from pathlib import Path
+from typing import Callable, List, Mapping, Optional, TypeVar
 
 import docstring_parser
+
+from . import _structures as structures
+from ._components import _create_task_factory_from_component_spec
+from ._data_passing import (get_canonical_type_struct_for_type,
+                            get_deserializer_code_for_type_struct,
+                            get_serializer_func_for_type_struct,
+                            serialize_value)
+from ._naming import _make_name_unique_by_adding_index
+from ._yaml_utils import dump_yaml
+from .structures import *
 
 T = TypeVar("T")
 
@@ -149,9 +147,10 @@ def _capture_function_code_using_cloudpickle(
     func, modules_to_capture: List[str] = None
 ) -> str:
     import base64
-    import sys
-    import cloudpickle
     import pickle
+    import sys
+
+    import cloudpickle
 
     if modules_to_capture is None:
         modules_to_capture = [func.__module__]
@@ -248,7 +247,7 @@ def _strip_type_hints_using_lib2to3(source_code: str) -> str:
 
     # Using the standard lib2to3 library to strip type annotations.
     # Switch to another library like strip-hints if issues are found.
-    from lib2to3 import fixer_base, refactor, fixer_util
+    from lib2to3 import fixer_base, fixer_util, refactor
 
     class StripAnnotations(fixer_base.BaseFix):
         PATTERN = r"""

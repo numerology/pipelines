@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for kfp.containers._component_builder module."""
-import mock
 import os
 import shutil
 import tempfile
 import unittest
 
-from kfp.containers import _component_builder
-from kfp.containers import _container_builder
+import mock
 from kfp import components
+from kfp.containers import _component_builder, _container_builder
 
 _TEST_TARGET_IMAGE = "gcr.io/my-project/my-image"
 _TEST_STAGING_LOCATION = "gs://my-project/tmp"

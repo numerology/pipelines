@@ -12,26 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
+import shutil
 import sys
 import tempfile
-import logging
-import shutil
+import warnings
 from collections import OrderedDict
 from typing import Callable, Dict, List, Optional
-import warnings
 
 from deprecated.sphinx import deprecated
+from kfp import components, dsl
+from kfp.components import _components, _structures
+from kfp.containers import entrypoint
 
 from ..components._components import _create_task_factory_from_component_spec
 from ..components._python_op import _func_to_component_spec
 from ._container_builder import ContainerBuilder
-from kfp import components
-from kfp import dsl
-from kfp.components import _components
-from kfp.components import _structures
-from kfp.containers import entrypoint
-
 
 V2_COMPONENT_ANNOTATION = "pipelines.kubeflow.org/component_v2"
 _PROGRAM_LAUNCHER_CMD = (

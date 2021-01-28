@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import ml_metadata as mlmd
-import ml_metadata as mlmd
-from ml_metadata.proto import metadata_store_pb2
-from ml_metadata.proto import metadata_store_service_pb2
 import random
 import time
+
+import ml_metadata as mlmd
+from ml_metadata.proto import metadata_store_pb2, metadata_store_service_pb2
 
 # Number of times to retry initialization of connection.
 _MAX_INIT_RETRY = 10

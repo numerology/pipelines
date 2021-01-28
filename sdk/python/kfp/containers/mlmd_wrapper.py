@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import absl
 import argparse
 import logging
-from ml_metadata.proto import metadata_store_pb2
 import os
 import sys
+
+import absl
+from ml_metadata.proto import metadata_store_pb2
 
 MLMD_HOST_ENV = "METADATA_GRPC_SERVICE_HOST"
 MLMD_PORT_ENV = "METADATA_GRPC_SERVICE_PORT"
