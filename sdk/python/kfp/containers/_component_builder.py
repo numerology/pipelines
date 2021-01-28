@@ -27,6 +27,7 @@ from ..components._components import _create_task_factory_from_component_spec
 from ..components._python_op import _func_to_component_spec
 from ._container_builder import ContainerBuilder
 from kfp import components
+from kfp.components import _components
 from kfp.components import _structures
 from kfp.containers import entrypoint
 
@@ -312,9 +313,10 @@ def build_python_component(
         python_version=python_version,
         entrypoint_container_path='/' + v2_entrypoint_path)
 
+    print(component_spec.implementation.container.args)
     # Override user program args for new-styled component.
     program_args = []
-    for component_input in component_spec.inputs:
+    for component_input in component_spec.inputs or []:
       if component_input._passing_style == components.InputArtifact:
         # For each input artifact, there'll be possibly 3 arguments passed to
         # the user program:
@@ -334,11 +336,19 @@ def build_python_component(
                 input_name=component_input.name))
         program_args.append('--{}{}'.format(
             component_input.name,
-            entrypoint.ARTIFACT_METADATA_SUFFIX
+            '_pod_name'
         ))
         program_args.append(
-            _structures.InputMetadataPlaceholder(
-                input_name=component_input.name))
+            '{{{{inputs.parameters.{input}}}}}'.format(
+                input=_components.PRODUCER_POD_NAME_PARAMETER.format(
+                    component_input.name)))
+        # program_args.append('--{}{}'.format(
+        #     component_input.name,
+        #     entrypoint.ARTIFACT_METADATA_SUFFIX
+        # ))
+        # program_args.append(
+        #     _structures.InputMetadataPlaceholder(
+        #         input_name=component_input.name))
         # TODO(numerology): Consider removing the need of output name
         # placeholder by letting v2 component output two metadata files per
         # output.
@@ -387,6 +397,19 @@ def build_python_component(
             'Only Input/OutputArtifact and parameter annotations '
             'are supported in V2 components. '
             'Got %s' % component_input._passing_style)
+    for component_output in component_spec.outputs or []:
+      if component_output._passing_style == components.OutputArtifact:
+        # For each input artifact, there'll be possibly 3 arguments passed to
+        # the user program:
+        # 1. {name of the artifact}_output_path: The actual path, or uri, of the
+        #    input artifact.
+        program_args.append('--{}{}'.format(
+            component_output.name,
+            entrypoint.OUTPUT_ARTIFACT_PATH_SUFFIX
+        ))
+        program_args.append(
+            _structures.OutputUriPlaceholder(
+                output_name=component_output.name))
 
     component_spec.implementation.container.args = program_args
   else:
@@ -432,10 +455,10 @@ def build_python_component(
         add_files=add_files)
 
     logging.info('Building and pushing container image.')
-    container_builder = ContainerBuilder(staging_gcs_path, target_image, namespace)
-    image_name_with_digest = container_builder.build(local_build_dir, arc_docker_filename, target_image, timeout)
+    # container_builder = ContainerBuilder(staging_gcs_path, target_image, namespace)
+    # image_name_with_digest = container_builder.build(local_build_dir, arc_docker_filename, target_image, timeout)
 
-  component_spec.implementation.container.image = image_name_with_digest
+  component_spec.implementation.container.image = 'dummy-image' # image_name_with_digest
 
   # Optionally writing the component definition to a local file for sharing
   target_component_file = target_component_file or getattr(component_func, '_component_target_component_file', None)
